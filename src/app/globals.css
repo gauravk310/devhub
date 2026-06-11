@@ -1,0 +1,429 @@
+@import "tailwindcss";
+
+/* ============================================================
+   DevHub — GitHub Dark Mode Design System
+   Based on GitHub Primer Dark (github.com dark theme)
+   ============================================================ */
+
+@theme {
+  /* ── Canvas (backgrounds) ── */
+  --color-canvas-default: #0d1117;
+  --color-canvas-subtle:  #161b22;
+  --color-canvas-inset:   #010409;
+  --color-canvas-overlay: #161b22;
+
+  /* ── Borders ── */
+  --color-border-default: #30363d;
+  --color-border-muted:   #21262d;
+
+  /* ── Foreground / Text ── */
+  --color-fg-default:     #e6edf3;
+  --color-fg-muted:       #8b949e;
+  --color-fg-subtle:      #6e7681;
+  --color-fg-on-emphasis: #ffffff;
+
+  /* ── Accent (blue links) ── */
+  --color-accent-fg:       #58a6ff;
+  --color-accent-emphasis: #1f6feb;
+  --color-accent-muted:    #388bfd26;
+
+  /* ── Success / DEPLOYED (green) ── */
+  --color-success-fg:       #3fb950;
+  --color-success-emphasis: #238636;
+  --color-success-muted:    #2ea04326;
+
+  /* ── Attention / PENDING (yellow) ── */
+  --color-attention-fg:       #d29922;
+  --color-attention-emphasis: #9e6a03;
+  --color-attention-muted:    #d2992226;
+
+  /* ── Danger / Error (red) ── */
+  --color-danger-fg:       #f85149;
+  --color-danger-emphasis: #da3633;
+  --color-danger-muted:    #f8514926;
+
+  /* ── Done / TESTING (purple) ── */
+  --color-done-fg:       #a371f7;
+  --color-done-emphasis: #8957e5;
+  --color-done-muted:    #a371f726;
+
+  /* ── Neutral / DISCARD ── */
+  --color-neutral-emphasis: #21262d;
+  --color-neutral-muted:    #6e768166;
+
+  /* ── Radius ── */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+
+  /* ── Animations ── */
+  --animate-fade-in:    fade-in 0.2s ease-out;
+  --animate-slide-down: slide-down 0.2s ease-out;
+  --animate-spin-slow:  spin 1.5s linear infinite;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  @keyframes slide-down {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* ── Base Reset ────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    border-color: var(--color-border-default);
+  }
+
+  html {
+    color-scheme: dark;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-canvas-default);
+    color: var(--color-fg-default);
+    min-height: 100vh;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--color-canvas-default); }
+  ::-webkit-scrollbar-thumb { background: var(--color-border-default); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-fg-subtle); }
+
+  /* Focus ring */
+  :focus-visible {
+    outline: 2px solid var(--color-accent-fg);
+    outline-offset: 2px;
+  }
+
+  /* Links */
+  a {
+    color: var(--color-accent-fg);
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+
+  /* Code / mono */
+  code, kbd, pre {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+    font-size: 0.875em;
+  }
+}
+
+/* ── Component Utilities ───────────────────────────────────── */
+@layer components {
+
+  /* ── Sidebar ── */
+  .gh-sidebar {
+    background-color: var(--color-canvas-subtle);
+    border-right: 1px solid var(--color-border-default);
+  }
+
+  /* ── Topbar ── */
+  .gh-topbar {
+    background-color: var(--color-canvas-subtle);
+    border-bottom: 1px solid var(--color-border-default);
+  }
+
+  /* ── Card ── */
+  .gh-card {
+    background-color: var(--color-canvas-subtle);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    transition: border-color 0.15s ease;
+  }
+  .gh-card:hover {
+    border-color: var(--color-accent-emphasis);
+  }
+
+  /* ── Primary Button (GitHub green) ── */
+  .gh-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    border: 1px solid #2ea04366;
+    background-color: var(--color-success-emphasis);
+    color: var(--color-fg-on-emphasis);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+  }
+  .gh-btn-primary:hover {
+    background-color: #2ea043;
+    border-color: #3fb95099;
+  }
+  .gh-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* ── Secondary Button ── */
+  .gh-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-default);
+    background-color: var(--color-canvas-subtle);
+    color: var(--color-fg-default);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+  }
+  .gh-btn-secondary:hover {
+    background-color: var(--color-border-muted);
+    border-color: var(--color-fg-subtle);
+  }
+
+  /* ── Danger Button ── */
+  .gh-btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    border: 1px solid #da363366;
+    background-color: transparent;
+    color: var(--color-danger-fg);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    white-space: nowrap;
+  }
+  .gh-btn-danger:hover {
+    background-color: var(--color-danger-emphasis);
+    color: var(--color-fg-on-emphasis);
+  }
+
+  /* ── Input ── */
+  .gh-input {
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-default);
+    background-color: var(--color-canvas-default);
+    color: var(--color-fg-default);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
+  }
+  .gh-input::placeholder {
+    color: var(--color-fg-subtle);
+  }
+  .gh-input:focus {
+    border-color: var(--color-accent-fg);
+    box-shadow: 0 0 0 3px var(--color-accent-muted);
+  }
+
+  /* ── Select ── */
+  .gh-select {
+    width: 100%;
+    padding: 0.375rem 2rem 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-default);
+    background-color: var(--color-canvas-default);
+    color: var(--color-fg-default);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    cursor: pointer;
+    outline: none;
+  }
+  .gh-select:focus {
+    border-color: var(--color-accent-fg);
+    box-shadow: 0 0 0 3px var(--color-accent-muted);
+  }
+
+  /* ── Label ── */
+  .gh-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-fg-default);
+    margin-bottom: 0.375rem;
+  }
+
+  /* ── Table ── */
+  .gh-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+  .gh-table th {
+    background-color: var(--color-canvas-subtle);
+    color: var(--color-fg-muted);
+    font-weight: 600;
+    text-align: left;
+    padding: 0.625rem 1rem;
+    border-bottom: 1px solid var(--color-border-default);
+    white-space: nowrap;
+  }
+  .gh-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-border-muted);
+    color: var(--color-fg-default);
+    vertical-align: middle;
+  }
+  .gh-table tr:hover td {
+    background-color: var(--color-border-muted);
+  }
+  .gh-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* ── Status Badges ── */
+  .badge-pending {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem; font-weight: 600;
+    background-color: var(--color-attention-muted);
+    color: var(--color-attention-fg);
+    border: 1px solid var(--color-attention-emphasis);
+  }
+  .badge-ready {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem; font-weight: 600;
+    background-color: var(--color-accent-muted);
+    color: var(--color-accent-fg);
+    border: 1px solid var(--color-accent-emphasis);
+  }
+  .badge-testing {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem; font-weight: 600;
+    background-color: var(--color-done-muted);
+    color: var(--color-done-fg);
+    border: 1px solid var(--color-done-emphasis);
+  }
+  .badge-deployed {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem; font-weight: 600;
+    background-color: var(--color-success-muted);
+    color: var(--color-success-fg);
+    border: 1px solid var(--color-success-emphasis);
+  }
+  .badge-discard {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem; font-weight: 600;
+    background-color: var(--color-neutral-emphasis);
+    color: var(--color-fg-subtle);
+    border: 1px solid var(--color-border-default);
+  }
+
+  /* ── Nav Item ── */
+  .gh-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-fg-muted);
+    transition: background-color 0.15s ease, color 0.15s ease;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .gh-nav-item:hover {
+    background-color: var(--color-border-muted);
+    color: var(--color-fg-default);
+    text-decoration: none;
+  }
+  .gh-nav-item.active {
+    background-color: #1f6feb33;
+    color: var(--color-accent-fg);
+  }
+
+  /* ── Modal backdrop ── */
+  .gh-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(1, 4, 9, 0.85);
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: fade-in 0.15s ease-out;
+  }
+
+  /* ── Modal box ── */
+  .gh-modal {
+    background-color: var(--color-canvas-overlay);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slide-down 0.2s ease-out;
+    box-shadow: 0 16px 48px rgba(1, 4, 9, 0.6);
+  }
+
+  /* ── Avatar ── */
+  .gh-avatar {
+    border-radius: 9999px;
+    border: 2px solid var(--color-border-default);
+    object-fit: cover;
+  }
+
+  /* ── Divider ── */
+  .gh-divider {
+    border: none;
+    border-top: 1px solid var(--color-border-muted);
+    margin: 1rem 0;
+  }
+
+  /* ── Empty state ── */
+  .gh-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    color: var(--color-fg-muted);
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  /* ── KPI Card ── */
+  .kpi-card {
+    background-color: var(--color-canvas-subtle);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    transition: border-color 0.15s ease;
+  }
+}

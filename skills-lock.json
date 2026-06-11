@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "mongodb-schema-design": {
+      "source": "mongodb/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/mongodb-schema-design/SKILL.md",
+      "computedHash": "7e2e43bee81674d391fa65e36177b4c137d158f759e116abab8687b2e64393bb"
+    },
+    "next-js-framework": {
+      "source": "pluginagentmarketplace/custom-plugin-react",
+      "sourceType": "github",
+      "skillPath": "skills/next-js-framework/SKILL.md",
+      "computedHash": "a22da67688759c2dd9b9b8771bdc6db00a79c6630045f7e7868e3da2d0f142bd"
+    },
+    "tailwind": {
+      "source": "heygen-com/hyperframes",
+      "sourceType": "github",
+      "skillPath": "skills/tailwind/SKILL.md",
+      "computedHash": "97bf0007f24e6275dcabc084c4d42f434ba48a84cec5a5b060036220239d6ddc"
+    },
+    "tailwind-design-system": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-mobile-development/skills/tailwind-design-system/SKILL.md",
+      "computedHash": "992ab1e874c4f4159aa18d4ff45d1c3f86f322f0bd2a6744cc32f7d6147f9f06"
+    },
+    "web-design-guidelines": {
+      "source": "nexu-io/open-design",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "9cb01f3716b46db154d5e142dad27543e230928367d5a7039100edb816fa2b29"
+    }
+  }
+}
