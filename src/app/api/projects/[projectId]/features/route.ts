@@ -48,7 +48,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (error) return Response.json({ error }, { status })
 
   const body = await req.json()
-  const { name, description, codebaseBranches, dbChange, envChange, deploymentDate } = body
+  const { name, description, codebaseBranches, dbChange, envChange, type, deploymentDate } = body
 
   if (!name?.trim()) return Response.json({ error: 'Feature name is required' }, { status: 400 })
 
@@ -61,6 +61,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     dbChange: dbChange?.trim() ?? '',
     envChange: envChange?.trim() ?? '',
     status: 'PENDING',
+    type: type || 'FEATURE',
     deploymentDate: deploymentDate ? new Date(deploymentDate) : null,
   })
 

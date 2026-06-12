@@ -31,7 +31,7 @@ export default function ProjectsPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.75rem' }}>
         <div>
           <h1 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--color-fg-default)', margin: 0, letterSpacing: '-0.02em' }}>
-            My Projects
+            Projects
           </h1>
           <p style={{ fontSize: '0.875rem', color: 'var(--color-fg-muted)', margin: '0.25rem 0 0' }}>
             {loading ? '…' : `${projects.length} project${projects.length !== 1 ? 's' : ''}`}

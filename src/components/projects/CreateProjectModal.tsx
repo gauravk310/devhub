@@ -9,7 +9,10 @@ import type { GitHubRepo, ICodebase } from '@/types'
 import { Plus, Trash2, ChevronRight, ChevronLeft } from 'lucide-react'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
+const generateObjectId = () => Math.random().toString(16).slice(2).padEnd(24, '0').slice(0, 24)
+
 interface CodebaseEntry {
+  _id: string
   tempId: string
   name: string
   repo: GitHubRepo | null
@@ -27,7 +30,7 @@ export default function CreateProjectModal({ isOpen, onClose, onCreated }: Props
   const [step, setStep] = useState(0)
   const [name, setName] = useState('')
   const [domain, setDomain] = useState('')
-  const [codebases, setCodebases] = useState<CodebaseEntry[]>([{ tempId: '1', name: '', repo: null }])
+  const [codebases, setCodebases] = useState<CodebaseEntry[]>([{ _id: generateObjectId(), tempId: '1', name: '', repo: null }])
   const [hasQA, setHasQA] = useState(false)
   const [qaBranches, setQABranches] = useState<Record<string, string>>({})
   const [repos, setRepos] = useState<GitHubRepo[]>([])
@@ -48,14 +51,14 @@ export default function CreateProjectModal({ isOpen, onClose, onCreated }: Props
 
   const reset = () => {
     setStep(0); setName(''); setDomain(''); setHasQA(false)
-    setCodebases([{ tempId: '1', name: '', repo: null }])
+    setCodebases([{ _id: generateObjectId(), tempId: '1', name: '', repo: null }])
     setQABranches({}); setError('')
   }
 
   const handleClose = () => { reset(); onClose() }
 
   const addCodebase = () =>
-    setCodebases((c) => [...c, { tempId: Date.now().toString(), name: '', repo: null }])
+    setCodebases((c) => [...c, { _id: generateObjectId(), tempId: Date.now().toString(), name: '', repo: null }])
 
   const removeCodebase = (id: string) =>
     setCodebases((c) => c.filter((e) => e.tempId !== id))
@@ -67,7 +70,7 @@ export default function CreateProjectModal({ isOpen, onClose, onCreated }: Props
     codebases
       .filter((c) => c.name.trim() && c.repo)
       .map((c) => ({
-        _id: Math.random().toString(16).slice(2).padEnd(24, '0').slice(0, 24), // browser-safe ObjectId-format ID
+        _id: c._id,
         tempId: c.tempId,
         name: c.name.trim(),
         repoFullName: c.repo!.full_name,

@@ -1,5 +1,5 @@
 import { Schema, model, models, Document, Types } from 'mongoose'
-import type { FeatureStatus } from '@/types'
+import type { FeatureStatus, FeatureType } from '@/types'
 
 interface ICodebaseBranch {
   codebaseId: Types.ObjectId
@@ -16,6 +16,7 @@ export interface IFeatureDocument extends Document {
   dbChange: string
   envChange: string
   status: FeatureStatus
+  type: FeatureType
   deploymentDate: Date | null
   createdAt: Date
   updatedAt: Date
@@ -40,6 +41,12 @@ const FeatureSchema = new Schema<IFeatureDocument>(
       type: String,
       enum: ['PENDING', 'READY', 'TESTING', 'DEPLOYED', 'DISCARD'],
       default: 'PENDING',
+    },
+    type: {
+      type: String,
+      enum: ['FEATURE', 'BUG FIX', 'UPDATE', 'DISCARD', 'OTHER'],
+      default: 'FEATURE',
+      required: true,
     },
     deploymentDate: { type: Date, default: null },
   },

@@ -83,6 +83,7 @@ export interface IProjectWithMembers extends Omit<IProject, 'members' | 'ownerId
 // ─── Feature ─────────────────────────────────────────────────
 
 export type FeatureStatus = 'PENDING' | 'READY' | 'TESTING' | 'DEPLOYED' | 'DISCARD'
+export type FeatureType = 'FEATURE' | 'BUG FIX' | 'UPDATE' | 'DISCARD' | 'OTHER'
 
 export interface ICodebaseBranch {
   codebaseId: ObjectId
@@ -100,6 +101,7 @@ export interface IFeature {
   dbChange: string
   envChange: string
   status: FeatureStatus
+  type?: FeatureType
   deploymentDate: Date | null
   createdAt: Date
   updatedAt: Date

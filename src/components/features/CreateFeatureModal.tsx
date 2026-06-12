@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Modal from '@/components/ui/Modal'
 import BranchSelector from './BranchSelector'
-import type { ICodebase } from '@/types'
+import type { ICodebase, FeatureType } from '@/types'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 interface Props {
@@ -20,12 +20,13 @@ export default function CreateFeatureModal({ isOpen, onClose, onCreated, project
   const [branches, setBranches] = useState<Record<string, string | null>>({})
   const [dbChange, setDbChange] = useState('')
   const [envChange, setEnvChange] = useState('')
+  const [type, setType] = useState<FeatureType>('FEATURE')
   const [deploymentDate, setDeploymentDate] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
   const reset = () => {
-    setName(''); setDescription(''); setBranches({})
+    setName(''); setDescription(''); setBranches({}); setType('FEATURE')
     setDbChange(''); setEnvChange(''); setDeploymentDate(''); setError('')
   }
   const handleClose = () => { reset(); onClose() }
@@ -42,7 +43,7 @@ export default function CreateFeatureModal({ isOpen, onClose, onCreated, project
       const res = await fetch(`/api/projects/${projectId}/features`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), description, codebaseBranches, dbChange, envChange, deploymentDate: deploymentDate || null }),
+        body: JSON.stringify({ name: name.trim(), description, codebaseBranches, dbChange, envChange, type, deploymentDate: deploymentDate || null }),
       })
       if (!res.ok) { const j = await res.json(); throw new Error(j.error || 'Failed') }
       onCreated()
@@ -100,9 +101,25 @@ export default function CreateFeatureModal({ isOpen, onClose, onCreated, project
           </div>
         </div>
 
-        <div>
-          <label className="gh-label">Deployment Date</label>
-          <input type="date" className="gh-input" value={deploymentDate} onChange={(e) => setDeploymentDate(e.target.value)} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div>
+            <label className="gh-label">Feature Type</label>
+            <select
+              className="gh-select"
+              value={type}
+              onChange={(e) => setType(e.target.value as any)}
+            >
+              <option value="FEATURE">Feature</option>
+              <option value="BUG FIX">Bug Fix</option>
+              <option value="UPDATE">Update</option>
+              <option value="DISCARD">Discard</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+          <div>
+            <label className="gh-label">Deployment Date</label>
+            <input type="date" className="gh-input" value={deploymentDate} onChange={(e) => setDeploymentDate(e.target.value)} />
+          </div>
         </div>
 
         {error && <p style={{ color: 'var(--color-danger-fg)', fontSize: '0.875rem', margin: 0 }}>{error}</p>}

@@ -2,6 +2,7 @@
 
 import NotificationBell from '@/components/notifications/NotificationBell'
 import UserDropdown from '@/components/layout/UserDropdown'
+import { useSidebar } from '@/components/layout/SidebarContext'
 
 interface TopbarProps {
   title?: string
@@ -9,6 +10,9 @@ interface TopbarProps {
 }
 
 export default function Topbar({ title, breadcrumb }: TopbarProps) {
+  const { isCollapsed } = useSidebar()
+  const sidebarWidth = isCollapsed ? '64px' : '240px'
+
   return (
     <header
       className="gh-topbar"
@@ -16,7 +20,7 @@ export default function Topbar({ title, breadcrumb }: TopbarProps) {
         position: 'fixed',
         top: 0,
         right: 0,
-        left: '240px',
+        left: sidebarWidth,
         height: '56px',
         zIndex: 15,
         display: 'flex',
@@ -24,6 +28,7 @@ export default function Topbar({ title, breadcrumb }: TopbarProps) {
         justifyContent: 'space-between',
         padding: '0 1.5rem',
         gap: '1rem',
+        transition: 'left 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
       {/* Left: breadcrumb / title */}
