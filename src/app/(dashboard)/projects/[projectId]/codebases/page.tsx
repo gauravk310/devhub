@@ -78,7 +78,7 @@ export default function CodebasesPage({ params }: { params: Promise<{ projectId:
           No codebases linked
         </p>
         <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-fg-muted)', maxWidth: 400 }}>
-          Link GitHub repositories to this project to see repo analytics here.
+          Link GitHub repositories to this project to see codebase contributions here.
           You can add codebases when creating or editing the project.
         </p>
       </div>
@@ -151,7 +151,7 @@ export default function CodebasesPage({ params }: { params: Promise<{ projectId:
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem', gap: '1rem' }}>
           <LoadingSpinner size={28} />
           <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-fg-muted)' }}>
-            Fetching analytics for <code style={{ fontFamily: 'monospace', color: 'var(--color-accent-fg)' }}>{selectedCodebase?.repoFullName}</code>…
+            Fetching contributions for <code style={{ fontFamily: 'monospace', color: 'var(--color-accent-fg)' }}>{selectedCodebase?.repoFullName}</code>…
           </p>
         </div>
       ) : statsError ? (

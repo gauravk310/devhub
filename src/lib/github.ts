@@ -61,7 +61,7 @@ export async function getRepoBranches(
   }))
 }
 
-// --- Repo Analytics ---------------------------------------------------
+// ─── Repo Analytics ───────────────────────────────────────────
 
 export interface RepoOverview {
   full_name: string
@@ -91,7 +91,6 @@ export interface Contributor {
 export interface RecentCommit {
   sha: string
   message: string
-  sourceBranch: string | null   // branch that was merged in (null if not a merge commit)
   author: { name: string; date: string; avatar?: string; login?: string }
   html_url: string
 }
@@ -171,7 +170,7 @@ export async function getRepoStats(
     safe(() => octokit.pulls.list({ owner, repo, state: 'closed', per_page: 1 }).then(r => r.headers['link'] ? -1 : r.data.length), 0),
     safe(() => octokit.issues.listForRepo({ owner, repo, state: 'open', per_page: 1 }).then(r => r.data.length), 0),
     safe(() => octokit.issues.listForRepo({ owner, repo, state: 'closed', per_page: 1 }).then(r => r.data.length), 0),
-    safeArray(() => octokit.repos.listCommits({ owner, repo, sha: repoData?.default_branch ?? 'main', per_page: 50 }).then(r => r.data)),
+    safeArray(() => octokit.repos.listCommits({ owner, repo, per_page: 10 }).then(r => r.data)),
     safeArray(() => octokit.repos.listReleases({ owner, repo, per_page: 10 }).then(r => r.data)),
     safeArray(() => octokit.repos.listBranches({ owner, repo, per_page: 100 }).then(r => r.data)),
   ])
@@ -208,37 +207,17 @@ export async function getRepoStats(
       total: c.contributions ?? 0,
     }))
 
-  // Parse source branch from a merge commit message.
-  // Standard GitHub merge messages:
-  //   "Merge pull request #N from owner/branch-name"
-  //   "Merge branch 'branch-name' into main"
-  //   "Merge branch 'branch-name'"
-  function parseMergeBranch(msg: string): string | null {
-    // PR merge: "Merge pull request #N from owner/branch-name"
-    const prMatch = msg.match(/^Merge pull request #\d+ from [^/]+\/(.+)$/im)
-    if (prMatch) return prMatch[1].trim()
-    // Branch merge: "Merge branch 'foo' into bar" or "Merge branch 'foo'"
-    const branchMatch = msg.match(/^Merge branch '([^']+)'/im)
-    if (branchMatch) return branchMatch[1].trim()
-    return null
-  }
-
-  // Filter to merge commits only (2+ parents) and take up to 10
-  const recentCommits: RecentCommit[] = (recentCommitsRaw || [])
-    .filter((c: any) => Array.isArray(c.parents) && c.parents.length >= 2)
-    .slice(0, 10)
-    .map((c: any) => ({
-      sha: c.sha,
-      message: c.commit.message.split('\n')[0],
-      sourceBranch: parseMergeBranch(c.commit.message.split('\n')[0]),
-      author: {
-        name: c.commit.author?.name ?? 'Unknown',
-        date: c.commit.author?.date ?? '',
-        avatar: c.author?.avatar_url,
-        login: c.author?.login,
-      },
-      html_url: c.html_url,
-    }))
+  const recentCommits: RecentCommit[] = (recentCommitsRaw || []).map((c: any) => ({
+    sha: c.sha,
+    message: c.commit.message.split('\n')[0],
+    author: {
+      name: c.commit.author?.name ?? 'Unknown',
+      date: c.commit.author?.date ?? '',
+      avatar: c.author?.avatar_url,
+      login: c.author?.login,
+    },
+    html_url: c.html_url,
+  }))
 
   const releases: Release[] = (releasesRaw || []).map((r: any) => ({
     tag_name: r.tag_name,

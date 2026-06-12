@@ -66,7 +66,7 @@ export default function FeatureStatusBadge({ status, featureId, projectId, onUpd
           style={{
             position: 'absolute',
             top: 'calc(100% + 4px)',
-            left: 0,
+            right: 0,
             background: 'var(--color-canvas-overlay)',
             border: '1px solid var(--color-border-default)',
             borderRadius: '8px',
