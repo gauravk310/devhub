@@ -5,12 +5,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { IProjectWithMembers } from '@/types'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import { LayoutDashboard, GitPullRequest, Users } from 'lucide-react'
+import { LayoutDashboard, GitPullRequest, Users, GitBranch } from 'lucide-react'
 
 const tabs = [
-  { label: 'Dashboard', href: 'dashboard', icon: LayoutDashboard },
-  { label: 'Features',  href: 'features',  icon: GitPullRequest },
-  { label: 'Team',      href: 'team',       icon: Users },
+  { label: 'Dashboard',  href: 'dashboard',  icon: LayoutDashboard },
+  { label: 'Features',   href: 'features',   icon: GitPullRequest },
+  { label: 'Team',       href: 'team',        icon: Users },
+  { label: 'Codebases',  href: 'codebases',  icon: GitBranch },
 ]
 
 export default function ProjectLayout({
