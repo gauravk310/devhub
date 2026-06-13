@@ -301,7 +301,7 @@
   .badge-pending {
     display: inline-flex; align-items: center; gap: 0.25rem;
     padding: 0.125rem 0.625rem;
-    border-radius: 9999px;
+    border-radius: 6px;
     font-size: 0.75rem; font-weight: 600;
     background-color: var(--color-attention-muted);
     color: var(--color-attention-fg);
@@ -310,7 +310,7 @@
   .badge-ready {
     display: inline-flex; align-items: center; gap: 0.25rem;
     padding: 0.125rem 0.625rem;
-    border-radius: 9999px;
+    border-radius: 6px;
     font-size: 0.75rem; font-weight: 600;
     background-color: var(--color-accent-muted);
     color: var(--color-accent-fg);
@@ -319,7 +319,7 @@
   .badge-testing {
     display: inline-flex; align-items: center; gap: 0.25rem;
     padding: 0.125rem 0.625rem;
-    border-radius: 9999px;
+    border-radius: 6px;
     font-size: 0.75rem; font-weight: 600;
     background-color: var(--color-done-muted);
     color: var(--color-done-fg);
@@ -328,7 +328,7 @@
   .badge-deployed {
     display: inline-flex; align-items: center; gap: 0.25rem;
     padding: 0.125rem 0.625rem;
-    border-radius: 9999px;
+    border-radius: 6px;
     font-size: 0.75rem; font-weight: 600;
     background-color: var(--color-success-muted);
     color: var(--color-success-fg);
@@ -337,7 +337,7 @@
   .badge-discard {
     display: inline-flex; align-items: center; gap: 0.25rem;
     padding: 0.125rem 0.625rem;
-    border-radius: 9999px;
+    border-radius: 6px;
     font-size: 0.75rem; font-weight: 600;
     background-color: var(--color-neutral-emphasis);
     color: var(--color-fg-subtle);

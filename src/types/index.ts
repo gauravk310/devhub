@@ -41,7 +41,7 @@ export interface IUser {
   image: string
   githubUsername?: string
   githubAccessToken?: string // server-side only, never sent to client
-  provider: 'github' | 'google'
+  provider: 'github'
   createdAt: Date
 }
 

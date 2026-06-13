@@ -4,7 +4,7 @@ import { useState } from 'react'
 import type { IFeaturePopulated, ICodebase, FeatureStatus } from '@/types'
 import FeatureStatusBadge from './FeatureStatusBadge'
 import { formatDate, truncate, getInitials } from '@/lib/utils'
-import { Trash2, Plus, Database, Key, FileCode } from 'lucide-react'
+import { Trash2, Plus, Database, Key, GitBranch } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Modal from '@/components/ui/Modal'
 
@@ -18,20 +18,58 @@ interface Props {
   onDelete: (featureId: string) => void
 }
 
+const TYPE_STYLES: Record<string, { bg: string; fg: string; border: string }> = {
+  'BUG FIX': { bg: '#3a1f1f', fg: '#f5a3a3', border: '#5c2b2b' },
+  FEATURE: { bg: '#1f2b3a', fg: '#9cc4f0', border: '#2b4060' },
+  UPDATE: { bg: '#1f3a2e', fg: '#9ce0bb', border: '#2b5c47' },
+  DISCARD: { bg: '#2a2a2a', fg: '#9a9a9a', border: '#3a3a3a' },
+}
+const DEFAULT_TYPE_STYLE = { bg: '#3a301f', fg: '#f0cf9c', border: '#5c4a2b' }
+
 export default function FeaturesTable({
   features, codebases, projectId, ownerId, onAddFeature, onStatusUpdated, onDelete,
 }: Props) {
   const { data: session } = useSession()
   const isOwner = session?.user?.id === ownerId
   const [selectedFeatureForChanges, setSelectedFeatureForChanges] = useState<IFeaturePopulated | null>(null)
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null)
 
   if (features.length === 0) {
     return (
-      <div className="gh-empty-state">
-        <Plus size={40} style={{ opacity: 0.3 }} />
-        <p style={{ fontWeight: 600 }}>No features yet</p>
-        <p style={{ fontSize: '0.875rem', color: 'var(--color-fg-subtle)' }}>Add the first feature to get started.</p>
-        <button onClick={onAddFeature} className="gh-btn-primary">
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.5rem',
+          padding: '3rem 1rem',
+          border: '1px solid #2e2e2e',
+          borderRadius: '10px',
+          background: '#1a1a1a',
+          color: '#9a9a9a',
+        }}
+      >
+        <Plus size={36} style={{ opacity: 0.3 }} />
+        <p style={{ fontWeight: 600, color: '#e4e4e4', margin: 0 }}>No features yet</p>
+        <p style={{ fontSize: '0.875rem', margin: 0 }}>Add the first feature to get started.</p>
+        <button
+          onClick={onAddFeature}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            marginTop: '0.5rem',
+            padding: '0.5rem 1rem',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            borderRadius: '6px',
+            border: '1px solid #3a3a3a',
+            background: '#2563eb',
+            color: '#fff',
+            cursor: 'pointer',
+          }}
+        >
           <Plus size={14} /> Add Feature
         </button>
       </div>
@@ -40,179 +78,283 @@ export default function FeaturesTable({
 
   return (
     <>
-      <div style={{ overflowX: 'auto', border: '1px solid var(--color-border-default)', borderRadius: '8px', minHeight: '280px' }}>
-        <table className="gh-table" style={{ minWidth: '900px' }}>
+      <div
+        style={{
+          overflow: 'auto',
+          border: '1px solid #2e2e2e',
+          borderRadius: '10px',
+          background: '#1a1a1a',
+          height: 'calc(100vh - 270px)',
+          minHeight: '350px',
+        }}
+      >
+        <table style={{ width: '100%', minWidth: '900px', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
           <thead>
-            <tr>
-              <th>Feature</th>
-              <th>Type</th>
-              <th>Author</th>
-              {codebases.map((cb) => <th key={cb._id.toString()}>{cb.name} Branch</th>)}
-              <th>Changes</th>
-              <th>Deploy Date</th>
-              <th>Status</th>
-              {isOwner && <th></th>}
+            <tr style={{ background: '#202020' }}>
+              {['Feature', 'Type', 'Author', ...codebases.map((cb) => `${cb.name} Branch`), 'Changes', 'Deploy Date', 'Status'].map((label) => (
+                <th
+                  key={label}
+                  style={{
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 10,
+                    background: '#202020',
+                    textAlign: 'left',
+                    padding: '0.7rem 1rem',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    color: '#8a8a8a',
+                    borderBottom: '1px solid #2e2e2e',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {label}
+                </th>
+              ))}
+              {isOwner && (
+                <th
+                  style={{
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 10,
+                    background: '#202020',
+                    borderBottom: '1px solid #2e2e2e',
+                    width: '40px',
+                  }}
+                />
+              )}
             </tr>
           </thead>
           <tbody>
             {features.map((f) => {
               const fType = f.type || 'FEATURE'
+              const typeStyle = TYPE_STYLES[fType] || DEFAULT_TYPE_STYLE
+              const id = f._id.toString()
+              const isHovered = hoveredRow === id
+              const hasDb = !!f.dbChange?.trim()
+              const hasEnv = !!f.envChange?.trim()
+              const hasChanges = hasDb || hasEnv
+
               return (
-                <tr key={f._id.toString()}>
+                <tr
+                  key={id}
+                  onMouseEnter={() => setHoveredRow(id)}
+                  onMouseLeave={() => setHoveredRow(null)}
+                  style={{
+                    background: isHovered ? '#222222' : 'transparent',
+                    transition: 'background 0.12s ease',
+                    borderBottom: '1px solid #262626',
+                  }}
+                >
                   {/* Name + description */}
-                  <td style={{ maxWidth: '200px' }}>
-                    <p style={{ margin: 0, fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-fg-default)' }}>{f.name}</p>
+                  <td style={{ padding: '0.7rem 1rem', maxWidth: '220px', verticalAlign: 'top' }}>
+                    <p style={{ margin: 0, fontWeight: 600, fontSize: '0.875rem', color: '#f0f0f0' }}>{f.name}</p>
                     {f.description && (
-                      <p style={{ margin: '0.125rem 0 0', fontSize: '0.75rem', color: 'var(--color-fg-muted)' }} title={f.description}>
-                        {truncate(f.description, 50)}
+                      <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: '#8a8a8a', lineHeight: 1.4 }} title={f.description}>
+                        {truncate(f.description, 60)}
                       </p>
                     )}
                   </td>
 
                   {/* Type */}
-                  <td>
-                    <span style={{
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      padding: '0.125rem 0.5rem',
-                      borderRadius: '4px',
-                      textTransform: 'uppercase',
-                      border: '1px solid',
-                      borderColor: fType === 'BUG FIX' ? 'var(--color-danger-emphasis)' :
-                                   fType === 'FEATURE' ? 'var(--color-accent-emphasis)' :
-                                   fType === 'UPDATE' ? 'var(--color-done-emphasis)' :
-                                   fType === 'DISCARD' ? 'var(--color-border-default)' :
-                                   'var(--color-attention-emphasis)',
-                      color: fType === 'BUG FIX' ? 'var(--color-danger-fg)' :
-                             fType === 'FEATURE' ? 'var(--color-accent-fg)' :
-                             fType === 'UPDATE' ? 'var(--color-done-fg)' :
-                             fType === 'DISCARD' ? 'var(--color-fg-subtle)' :
-                             'var(--color-attention-fg)',
-                      backgroundColor: fType === 'BUG FIX' ? 'var(--color-danger-muted)' :
-                                       fType === 'FEATURE' ? 'var(--color-accent-muted)' :
-                                       fType === 'UPDATE' ? 'var(--color-done-muted)' :
-                                       fType === 'DISCARD' ? 'var(--color-neutral-muted)' :
-                                       'var(--color-attention-muted)',
-                      whiteSpace: 'nowrap',
-                    }}>
+                  <td style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        padding: '0.15rem 0.55rem',
+                        borderRadius: '4px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        border: `1px solid ${typeStyle.border}`,
+                        color: typeStyle.fg,
+                        background: typeStyle.bg,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       {fType}
                     </span>
                   </td>
 
                   {/* Author */}
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                  <td style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       {f.authorId?.image ? (
-                        <img src={f.authorId.image} alt="" style={{ width: 20, height: 20, borderRadius: '50%' }} title={f.authorId.name} />
+                        <img
+                          src={f.authorId.image}
+                          alt=""
+                          style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid #333' }}
+                          title={f.authorId.name}
+                        />
                       ) : (
-                        <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--color-accent-emphasis)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700, color: '#fff' }}>
+                        <div
+                          style={{
+                            width: 22,
+                            height: 22,
+                            borderRadius: '50%',
+                            background: '#3a3a3a',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.6rem',
+                            fontWeight: 700,
+                            color: '#e0e0e0',
+                          }}
+                        >
                           {getInitials(f.authorId?.name ?? 'U')}
                         </div>
                       )}
-                      <span style={{ fontSize: '0.8125rem', color: 'var(--color-fg-muted)' }}>{f.authorId?.name}</span>
+                      <span style={{ fontSize: '0.8125rem', color: '#c4c4c4' }}>{f.authorId?.name}</span>
                     </div>
                   </td>
 
                   {/* Dynamic codebase branch columns */}
                   {codebases.map((cb) => {
-                    const cbBranch = f.codebaseBranches.find(
-                      (b) => b.codebaseId.toString() === cb._id.toString()
-                    )
+                    const cbBranch = f.codebaseBranches.find((b) => b.codebaseId.toString() === cb._id.toString())
                     return (
-                      <td key={cb._id.toString()}>
-                        <span style={{ fontSize: '0.8125rem', fontFamily: 'JetBrains Mono, monospace', color: cbBranch?.branchName ? 'var(--color-success-fg)' : 'var(--color-fg-subtle)' }}>
-                          {cbBranch?.branchName ?? '— No Branch'}
-                        </span>
+                      <td key={cb._id.toString()} style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
+                        {cbBranch?.branchName ? (
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                              fontSize: '0.78rem',
+                              fontFamily: 'JetBrains Mono, monospace',
+                              color: '#8fd4a8',
+                              background: '#1b2e23',
+                              border: '1px solid #2b4a3a',
+                              borderRadius: '4px',
+                              padding: '0.15rem 0.45rem',
+                            }}
+                          >
+                            <GitBranch size={11} />
+                            {cbBranch.branchName}
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '0.8125rem', color: '#5a5a5a' }}>— No Branch</span>
+                        )}
                       </td>
                     )
                   })}
 
-                  <td>
-                    {(() => {
-                      const hasDb = !!f.dbChange?.trim()
-                      const hasEnv = !!f.envChange?.trim()
-                      if (!hasDb && !hasEnv) {
-                        return <span style={{ color: 'var(--color-fg-subtle)', fontSize: '0.8125rem' }}>—</span>
-                      }
-                      return (
-                        <button
-                          onClick={() => setSelectedFeatureForChanges(f)}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.4rem',
-                            padding: '0.3rem 0.625rem',
-                            fontSize: '0.78rem',
-                            fontWeight: 600,
-                            borderRadius: '6px',
-                            border: '1px solid var(--color-border-default)',
-                            background: 'var(--color-canvas-default)',
-                            color: 'var(--color-accent-fg)',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease',
-                            lineHeight: 1.2,
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'var(--color-accent-muted)'
-                            e.currentTarget.style.borderColor = 'var(--color-accent-emphasis)'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'var(--color-canvas-default)'
-                            e.currentTarget.style.borderColor = 'var(--color-border-default)'
-                          }}
-                        >
-                          <span>View Changes</span>
-                          <div style={{ display: 'flex', gap: '0.2rem' }}>
-                            {hasDb && (
-                              <span style={{
+                  {/* Changes */}
+                  <td style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
+                    {!hasChanges ? (
+                      <span style={{ color: '#5a5a5a', fontSize: '0.8125rem' }}>—</span>
+                    ) : (
+                      <button
+                        onClick={() => setSelectedFeatureForChanges(f)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          padding: '0.3rem 0.625rem',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          borderRadius: '6px',
+                          border: '1px solid #3a3a3a',
+                          background: '#242424',
+                          color: '#cfcfcf',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                          lineHeight: 1.2,
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#2d2d2d'
+                          e.currentTarget.style.borderColor = '#4a4a4a'
+                          e.currentTarget.style.color = '#fff'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = '#242424'
+                          e.currentTarget.style.borderColor = '#3a3a3a'
+                          e.currentTarget.style.color = '#cfcfcf'
+                        }}
+                      >
+                        <span>View</span>
+                        <div style={{ display: 'flex', gap: '0.2rem' }}>
+                          {hasDb && (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.2rem',
                                 fontSize: '0.625rem',
                                 fontWeight: 700,
                                 padding: '0.05rem 0.3rem',
                                 borderRadius: '3px',
-                                background: 'var(--color-attention-muted)',
-                                color: 'var(--color-attention-fg)',
-                                border: '1px solid var(--color-attention-emphasis)',
-                              }}>
-                                DB
-                              </span>
-                            )}
-                            {hasEnv && (
-                              <span style={{
+                                background: '#3a301f',
+                                color: '#f0cf9c',
+                                border: '1px solid #5c4a2b',
+                              }}
+                            >
+                              <Database size={9} /> DB
+                            </span>
+                          )}
+                          {hasEnv && (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.2rem',
                                 fontSize: '0.625rem',
                                 fontWeight: 700,
                                 padding: '0.05rem 0.3rem',
                                 borderRadius: '3px',
-                                background: 'var(--color-danger-muted)',
-                                color: 'var(--color-danger-fg)',
-                                border: '1px solid var(--color-danger-emphasis)',
-                              }}>
-                                ENV
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      )
-                    })()}
+                                background: '#3a1f1f',
+                                color: '#f5a3a3',
+                                border: '1px solid #5c2b2b',
+                              }}
+                            >
+                              <Key size={9} /> ENV
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    )}
                   </td>
-                  <td style={{ fontSize: '0.8125rem', color: 'var(--color-fg-muted)', whiteSpace: 'nowrap' }}>
+
+                  {/* Deploy date */}
+                  <td style={{ padding: '0.7rem 1rem', fontSize: '0.8125rem', color: '#9a9a9a', whiteSpace: 'nowrap', verticalAlign: 'top' }}>
                     {formatDate(f.deploymentDate)}
                   </td>
-                  <td>
-                    <FeatureStatusBadge
-                      status={f.status}
-                      featureId={f._id.toString()}
-                      projectId={projectId}
-                      onUpdated={onStatusUpdated}
-                    />
+
+                  {/* Status */}
+                  <td style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
+                    <FeatureStatusBadge status={f.status} featureId={id} projectId={projectId} onUpdated={onStatusUpdated} />
                   </td>
+
+                  {/* Delete */}
                   {isOwner && (
-                    <td>
+                    <td style={{ padding: '0.7rem 0.5rem', verticalAlign: 'top' }}>
                       <button
-                        onClick={() => onDelete(f._id.toString())}
+                        onClick={() => onDelete(id)}
                         title="Delete feature"
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-fg-subtle)', transition: 'color 0.15s, background 0.15s' }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-danger-fg)'; e.currentTarget.style.background = 'var(--color-danger-muted)' }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-fg-subtle)'; e.currentTarget.style.background = 'transparent' }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 28,
+                          height: 28,
+                          borderRadius: 6,
+                          border: 'none',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          color: isHovered ? '#666' : 'transparent',
+                          transition: 'color 0.15s, background 0.15s',
+                          opacity: isHovered ? 1 : 0,
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = '#f87171'
+                          e.currentTarget.style.background = '#3a1f1f'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = isHovered ? '#666' : 'transparent'
+                          e.currentTarget.style.background = 'transparent'
+                        }}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -234,23 +376,27 @@ export default function FeaturesTable({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {selectedFeatureForChanges?.dbChange?.trim() && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-fg-muted)' }}>
-                <Database size={15} style={{ color: 'var(--color-attention-fg)' }} />
-                <span style={{ fontSize: '0.8125rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Database Changes</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#f0cf9c' }}>
+                <Database size={15} />
+                <span style={{ fontSize: '0.8125rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Database Changes
+                </span>
               </div>
-              <pre style={{
-                margin: 0,
-                padding: '0.75rem 1rem',
-                fontSize: '0.8125rem',
-                fontFamily: 'JetBrains Mono, monospace',
-                borderRadius: '6px',
-                background: 'var(--color-canvas-inset)',
-                border: '1px solid var(--color-border-default)',
-                color: 'var(--color-fg-default)',
-                overflowX: 'auto',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-all',
-              }}>
+              <pre
+                style={{
+                  margin: 0,
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.8125rem',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  borderRadius: '6px',
+                  background: '#1e1e1e',
+                  border: '1px solid #333',
+                  color: '#e0e0e0',
+                  overflowX: 'auto',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-all',
+                }}
+              >
                 {selectedFeatureForChanges.dbChange}
               </pre>
             </div>
@@ -258,23 +404,27 @@ export default function FeaturesTable({
 
           {selectedFeatureForChanges?.envChange?.trim() && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-fg-muted)' }}>
-                <Key size={15} style={{ color: 'var(--color-danger-fg)' }} />
-                <span style={{ fontSize: '0.8125rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Environment Changes</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#f5a3a3' }}>
+                <Key size={15} />
+                <span style={{ fontSize: '0.8125rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Environment Changes
+                </span>
               </div>
-              <pre style={{
-                margin: 0,
-                padding: '0.75rem 1rem',
-                fontSize: '0.8125rem',
-                fontFamily: 'JetBrains Mono, monospace',
-                borderRadius: '6px',
-                background: 'var(--color-canvas-inset)',
-                border: '1px solid var(--color-border-default)',
-                color: 'var(--color-fg-default)',
-                overflowX: 'auto',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-all',
-              }}>
+              <pre
+                style={{
+                  margin: 0,
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.8125rem',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  borderRadius: '6px',
+                  background: '#1e1e1e',
+                  border: '1px solid #333',
+                  color: '#e0e0e0',
+                  overflowX: 'auto',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-all',
+                }}
+              >
                 {selectedFeatureForChanges.envChange}
               </pre>
             </div>

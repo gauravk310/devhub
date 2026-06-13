@@ -385,53 +385,67 @@ export default function DeploymentHistoryPage({ params }: { params: Promise<{ pr
       {/* Codebase selection tabs */}
       <div style={{
         display: 'flex',
-        gap: '0.5rem',
-        flexWrap: 'wrap',
-        padding: '0.625rem',
-        background: 'var(--color-canvas-subtle)',
-        borderRadius: '10px',
-        border: '1px solid var(--color-border-default)',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderBottom: '1px solid var(--color-border-default)',
+        background: 'transparent',
+        paddingBottom: '0',
+        marginBottom: '1rem',
       }}>
-        {codebases.map((cb) => {
-          const isActive = selectedCodebase?._id?.toString() === cb._id?.toString()
-          return (
-            <button
-              key={cb._id.toString()}
-              onClick={() => setSelectedCodebase(cb)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.4rem',
-                padding: '0.4rem 0.875rem',
-                fontSize: '0.82rem', fontWeight: 600,
-                borderRadius: '6px',
-                border: isActive ? '1px solid var(--color-accent-emphasis)' : '1px solid transparent',
-                background: isActive ? 'var(--color-accent-muted)' : 'transparent',
-                color: isActive ? 'var(--color-accent-fg)' : 'var(--color-fg-muted)',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-                fontFamily: 'JetBrains Mono, monospace',
-              }}
-              onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'var(--color-border-muted)' }}
-              onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-            >
-              <GitBranch size={13} />
-              {cb.name || cb.repoFullName}
-            </button>
-          )
-        })}
+        <div style={{ display: 'flex', gap: '0.25rem' }}>
+          {codebases.map((cb) => {
+            const isActive = selectedCodebase?._id?.toString() === cb._id?.toString()
+            return (
+              <button
+                key={cb._id.toString()}
+                onClick={() => setSelectedCodebase(cb)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.4rem',
+                  padding: '0.625rem 0.875rem',
+                  fontSize: '0.85rem', fontWeight: isActive ? 600 : 400,
+                  border: 'none',
+                  borderBottom: isActive ? '2px solid #f78166' : '2px solid transparent',
+                  background: 'transparent',
+                  color: isActive ? 'var(--color-fg-default)' : 'var(--color-fg-muted)',
+                  cursor: 'pointer',
+                  transition: 'all 0.12s',
+                  borderRadius: '6px 6px 0 0',
+                  marginBottom: '-1px',
+                }}
+                onMouseEnter={e => {
+                  if (!isActive) {
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(110, 118, 129, 0.08)';
+                    (e.currentTarget as HTMLElement).style.color = 'var(--color-fg-default)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isActive) {
+                    (e.currentTarget as HTMLElement).style.background = 'transparent';
+                    (e.currentTarget as HTMLElement).style.color = 'var(--color-fg-muted)';
+                  }
+                }}
+              >
+                <GitBranch size={14} style={{ opacity: isActive ? 1 : 0.7 }} />
+                {cb.name || cb.repoFullName}
+              </button>
+            )
+          })}
+        </div>
 
+        {/* Link to selected repo */}
         {selectedCodebase && (
           <a
             href={`https://github.com/${selectedCodebase.repoFullName}`}
             target="_blank" rel="noreferrer"
+            className="gh-btn-secondary"
             style={{
-              marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.35rem',
-              padding: '0.4rem 0.875rem', fontSize: '0.78rem', fontWeight: 500,
+              display: 'flex', alignItems: 'center', gap: '0.35rem',
+              padding: '0.375rem 0.75rem', fontSize: '0.82rem', fontWeight: 500,
               borderRadius: '6px', border: '1px solid var(--color-border-default)',
-              color: 'var(--color-fg-muted)', textDecoration: 'none',
-              transition: 'all 0.15s', background: 'transparent',
+              color: 'var(--color-fg-default)', textDecoration: 'none',
+              background: 'var(--color-canvas-subtle)',
+              marginBottom: '0.375rem',
             }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-accent-fg)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-accent-fg)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-fg-muted)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border-default)' }}
           >
             <ExternalLink size={12} />
             View on GitHub

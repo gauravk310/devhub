@@ -2,10 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { GitBranch, FolderKanban, Bell, ChevronRight } from 'lucide-react'
+import { FolderKanban, Bell } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { getInitials } from '@/lib/utils'
-import { useSidebar } from '@/components/layout/SidebarContext'
 
 const navItems = [
   { href: '/projects',      label: 'Projects',       icon: FolderKanban },
@@ -15,18 +14,6 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
-  const { isCollapsed, toggleSidebar, setIsCollapsed } = useSidebar()
-
-  const sidebarWidth = isCollapsed ? '64px' : '240px'
-
-  const handleNavClick = (href: string) => {
-    const isActive = pathname.startsWith(href)
-    if (isActive) {
-      toggleSidebar()
-    } else {
-      setIsCollapsed(false)
-    }
-  }
 
   return (
     <div
@@ -38,12 +25,11 @@ export default function Sidebar() {
         bottom: 0,
         zIndex: 20,
         display: 'flex',
-        width: sidebarWidth,
-        transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        width: '64px',
         borderRight: 'none', // Managed by sub-containers
       }}
     >
-      {/* 1. Activity Bar (Fixed, 64px) */}
+      {/* Activity Bar (Fixed, 64px) */}
       <div
         style={{
           width: '64px',
@@ -57,8 +43,8 @@ export default function Sidebar() {
         }}
       >
         {/* Logo Icon */}
-        <div
-          onClick={toggleSidebar}
+        <Link
+          href="/projects"
           style={{
             height: '56px',
             display: 'flex',
@@ -66,24 +52,20 @@ export default function Sidebar() {
             justifyContent: 'center',
             width: '100%',
             borderBottom: '1px solid var(--color-border-default)',
-            cursor: 'pointer',
           }}
-          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          title="DevHub"
         >
-          <div
+          <img
+            src="/logo.png"
+            alt="DevHub Logo"
             style={{
               width: 32,
               height: 32,
               borderRadius: 8,
-              background: 'linear-gradient(135deg, #1f6feb, #58a6ff)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              objectFit: 'cover',
             }}
-          >
-            <GitBranch size={18} color="#fff" />
-          </div>
-        </div>
+          />
+        </Link>
 
         {/* Nav Icons */}
         <nav
@@ -103,7 +85,6 @@ export default function Sidebar() {
               <Link
                 key={href}
                 href={href}
-                onClick={() => handleNavClick(href)}
                 className={`gh-nav-item ${isActive ? 'active' : ''}`}
                 style={{
                   width: '40px',
@@ -126,7 +107,6 @@ export default function Sidebar() {
         {session?.user && (
           <Link
             href="/profile"
-            onClick={() => setIsCollapsed(false)}
             style={{
               height: '56px',
               display: 'flex',
@@ -162,97 +142,6 @@ export default function Sidebar() {
                 {getInitials(session.user.name ?? 'U')}
               </div>
             )}
-          </Link>
-        )}
-      </div>
-
-      {/* 2. Sidebar Panel (Collapsible, 176px) */}
-      <div
-        style={{
-          width: isCollapsed ? '0px' : '176px',
-          height: '100%',
-          backgroundColor: 'var(--color-canvas-subtle)',
-          borderRight: isCollapsed ? 'none' : '1px solid var(--color-border-default)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-right 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}
-      >
-        {/* Title / Logo Label */}
-        <div
-          style={{
-            height: '56px',
-            padding: '0 1rem',
-            borderBottom: '1px solid var(--color-border-default)',
-            display: 'flex',
-            alignItems: 'center',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--color-fg-default)', letterSpacing: '-0.02em' }}>
-            DevHub
-          </span>
-        </div>
-
-        {/* Nav Labels */}
-        <div
-          style={{
-            padding: '0.75rem 0.5rem',
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.25rem',
-          }}
-        >
-          {navItems.map(({ href, label }) => {
-            const isActive = pathname.startsWith(href)
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`gh-nav-item ${isActive ? 'active' : ''}`}
-                style={{
-                  height: '40px',
-                  padding: '0 0.75rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  borderRadius: '6px',
-                  whiteSpace: 'nowrap',
-                  textDecoration: 'none',
-                }}
-              >
-                {label}
-                {isActive && (
-                  <ChevronRight
-                    size={14}
-                    style={{ marginLeft: 'auto', color: 'var(--color-accent-fg)', opacity: 0.7 }}
-                  />
-                )}
-              </Link>
-            )
-          })}
-        </div>
-
-        {/* User Profile Label */}
-        {session?.user && (
-          <Link
-            href="/profile"
-            style={{
-              height: '56px',
-              padding: '0 1rem',
-              borderTop: '1px solid var(--color-border-default)',
-              display: 'flex',
-              alignItems: 'center',
-              textDecoration: 'none',
-              minWidth: 0,
-            }}
-          >
-            <div style={{ minWidth: 0 }}>
-              <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-fg-default)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {session.user.name}
-              </p>
-            </div>
           </Link>
         )}
       </div>

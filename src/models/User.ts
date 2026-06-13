@@ -6,7 +6,7 @@ export interface IUserDocument extends Document {
   image: string
   githubUsername: string
   githubAccessToken: string
-  provider: 'github' | 'google'
+  provider: 'github'
   createdAt: Date
 }
 
@@ -24,7 +24,7 @@ const UserSchema = new Schema<IUserDocument>(
     image: { type: String, default: '' },
     githubUsername: { type: String, default: '' },
     githubAccessToken: { type: String, default: '' }, // server-side only
-    provider: { type: String, enum: ['github', 'google'], required: true },
+    provider: { type: String, enum: ['github'], required: true },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 )

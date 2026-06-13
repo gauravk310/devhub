@@ -5,6 +5,7 @@ import type { IProjectWithMembers, IFeaturePopulated, FeatureStatus } from '@/ty
 import FeaturesTable from '@/components/features/FeaturesTable'
 import CreateFeatureModal from '@/components/features/CreateFeatureModal'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import SwalConfirm from '@/components/ui/SwalConfirm'
 import { Plus } from 'lucide-react'
 
 export default function FeaturesPage({ params }: { params: Promise<{ projectId: string }> }) {
@@ -33,10 +34,17 @@ export default function FeaturesPage({ params }: { params: Promise<{ projectId: 
     )
   }
 
-  const handleDelete = async (featureId: string) => {
-    if (!confirm('Delete this feature?')) return
-    await fetch(`/api/projects/${projectId}/features/${featureId}`, { method: 'DELETE' })
-    setFeatures((prev) => prev.filter((f) => f._id.toString() !== featureId))
+  const [featureToDelete, setFeatureToDelete] = useState<string | null>(null)
+
+  const handleDelete = (featureId: string) => {
+    setFeatureToDelete(featureId)
+  }
+
+  const confirmDelete = async () => {
+    if (!featureToDelete) return
+    await fetch(`/api/projects/${projectId}/features/${featureToDelete}`, { method: 'DELETE' })
+    setFeatures((prev) => prev.filter((f) => f._id.toString() !== featureToDelete))
+    setFeatureToDelete(null)
   }
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}><LoadingSpinner size={28} /></div>
@@ -68,6 +76,16 @@ export default function FeaturesPage({ params }: { params: Promise<{ projectId: 
         onCreated={load}
         projectId={projectId}
         codebases={project?.codebases ?? []}
+      />
+
+      <SwalConfirm
+        isOpen={!!featureToDelete}
+        onClose={() => setFeatureToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete this feature?"
+        message="This action cannot be undone. This feature will be permanently removed from the project."
+        confirmText="Delete"
+        cancelText="Cancel"
       />
     </div>
   )

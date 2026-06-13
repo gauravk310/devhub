@@ -1,7 +1,6 @@
 import NextAuth from 'next-auth'
 import type { NextAuthConfig } from 'next-auth'
 import GitHub from 'next-auth/providers/github'
-import Google from 'next-auth/providers/google'
 import dbConnect from '@/lib/mongodb'
 import User from '@/models/User'
 
@@ -11,10 +10,6 @@ export const authConfig: NextAuthConfig = {
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
       authorization: { params: { scope: 'read:user user:email repo' } },
-    }),
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
 
@@ -49,17 +44,6 @@ export const authConfig: NextAuthConfig = {
               githubUsername: ghProfile?.login ?? '',
               githubAccessToken: account.access_token,
               provider: 'github',
-            },
-            { upsert: true, new: true }
-          )
-        } else if (account?.provider === 'google') {
-          await User.findOneAndUpdate(
-            { email: user.email },
-            {
-              name: user.name,
-              email: user.email,
-              image: user.image,
-              provider: 'google',
             },
             { upsert: true, new: true }
           )

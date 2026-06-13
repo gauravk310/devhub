@@ -37,6 +37,9 @@ export default function ProjectLayout({
       {/* Project header */}
       <div
         style={{
+          position: 'sticky',
+          top: '56px',
+          zIndex: 15,
           padding: '1.25rem 2rem 0',
           borderBottom: '1px solid var(--color-border-default)',
           background: 'var(--color-canvas-subtle)',
@@ -62,16 +65,29 @@ export default function ProjectLayout({
                 href={fullHref}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '0.375rem',
-                  padding: '0.5rem 0.875rem',
-                  fontSize: '0.875rem', fontWeight: 500,
+                  padding: '0.55rem 0.875rem',
+                  fontSize: '0.875rem', fontWeight: active ? 600 : 400,
                   color: active ? 'var(--color-fg-default)' : 'var(--color-fg-muted)',
-                  borderBottom: active ? '2px solid var(--color-accent-fg)' : '2px solid transparent',
+                  borderBottom: active ? '2px solid #f78166' : '2px solid transparent',
                   marginBottom: '-1px',
                   textDecoration: 'none',
-                  transition: 'color 0.15s',
+                  transition: 'color 0.12s, border-bottom-color 0.12s',
+                  borderRadius: '6px 6px 0 0',
+                }}
+                onMouseEnter={e => {
+                  if (!active) {
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(110, 118, 129, 0.08)';
+                    (e.currentTarget as HTMLElement).style.color = 'var(--color-fg-default)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!active) {
+                    (e.currentTarget as HTMLElement).style.background = 'transparent';
+                    (e.currentTarget as HTMLElement).style.color = 'var(--color-fg-muted)';
+                  }
                 }}
               >
-                <Icon size={15} />
+                <Icon size={15} style={{ opacity: active ? 1 : 0.7 }} />
                 {label}
               </Link>
             )
