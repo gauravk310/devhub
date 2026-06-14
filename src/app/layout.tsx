@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { SessionProvider } from 'next-auth/react'
+import PixelBlastBackground from '@/components/layout/PixelBlastBackground'
+import ClickSpark from '@/components/ui/ClickSpark'
 import './globals.css'
 
 const inter = Inter({
@@ -28,7 +30,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <PixelBlastBackground />
+          <ClickSpark sparkColor="#58a6ff" sparkCount={10} sparkRadius={25} sparkSize={12}>
+            {children}
+          </ClickSpark>
+        </SessionProvider>
       </body>
     </html>
   )

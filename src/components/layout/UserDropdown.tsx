@@ -49,7 +49,7 @@ export default function UserDropdown() {
           <img
             src={session.user.image}
             alt={session.user.name ?? ''}
-            style={{ width: 24, height: 24, borderRadius: '50%', border: '1px solid var(--color-border-default)' }}
+            style={{ width: 26, height: 26, borderRadius: '50%', border: '2px solid #e24a3b' }}
           />
         ) : (
           <div style={{

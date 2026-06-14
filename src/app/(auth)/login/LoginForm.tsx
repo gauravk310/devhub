@@ -6,10 +6,6 @@ import Script from 'next/script'
 import dynamicImport from 'next/dynamic'
 import { GitBranch } from 'lucide-react'
 
-const PixelBlast = dynamicImport(() => import('@/components/ui/PixelBlast'), {
-  ssr: false,
-})
-
 interface LoginFormProps {
   signInGithub: () => Promise<void>
   signInGoogle: () => Promise<void>
@@ -20,7 +16,7 @@ export default function LoginForm({ signInGithub, signInGoogle }: LoginFormProps
     <div style={{
       position: 'relative',
       minHeight: '100vh',
-      background: '#0d1117',
+      background: 'transparent',
       color: '#e6edf3',
       fontFamily: 'Inter, -apple-system, sans-serif',
       display: 'flex',
@@ -34,18 +30,6 @@ export default function LoginForm({ signInGithub, signInGoogle }: LoginFormProps
         strategy="lazyOnload"
       />
 
-      {/* Full-screen background PixelBlast */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.2, pointerEvents: 'none' }}>
-        <PixelBlast
-          variant="circle"
-          pixelSize={4}
-          color="#58a6ff"
-          patternScale={2.8}
-          patternDensity={1.1}
-          speed={0.25}
-          transparent={true}
-        />
-      </div>
 
       {/* Main split-screen container */}
       <div style={{

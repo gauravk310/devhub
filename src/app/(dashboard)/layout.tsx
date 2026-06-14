@@ -25,7 +25,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
           style={{
             flex: 1,
             paddingTop: '56px', // topbar height
-            background: 'var(--color-canvas-default)',
+            background: 'transparent',
           }}
         >
           {children}
