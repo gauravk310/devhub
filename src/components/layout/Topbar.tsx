@@ -32,8 +32,11 @@ export default function Topbar({ title, breadcrumb }: TopbarProps) {
   const segments = pathname.split('/').filter(Boolean)
   const isInsideProject = segments[0] === 'projects' && segments[1] && segments[1] !== 'new'
   const projectId = isInsideProject ? segments[1] : null
+  const isInsideDatabase = isInsideProject && segments[2] === 'database' && segments[3] && segments[3] !== 'new'
+  const databaseId = isInsideDatabase ? segments[3] : null
 
   const [project, setProject] = useState<{ name: string } | null>(null)
+  const [database, setDatabase] = useState<{ name: string } | null>(null)
 
   useEffect(() => {
     if (projectId) {
@@ -42,6 +45,14 @@ export default function Topbar({ title, breadcrumb }: TopbarProps) {
         .then((j) => setProject(j.data))
     }
   }, [projectId])
+
+  useEffect(() => {
+    if (projectId && databaseId) {
+      fetch(`/api/projects/${projectId}/databases/${databaseId}`)
+        .then((r) => r.json())
+        .then((j) => setDatabase(j.data))
+    }
+  }, [projectId, databaseId])
 
   return (
     <header
@@ -64,27 +75,36 @@ export default function Topbar({ title, breadcrumb }: TopbarProps) {
     >
       {/* Left: Dynamic Project Breadcrumbs or generic Title */}
       {isInsideProject ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', minWidth: 0 }}>
-          {/* Organization Select */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#8b949e', fontSize: '0.875rem', fontWeight: 500, cursor: 'pointer' }}>
-            <span className="topbar-breadcrumb-link">Personal Org</span>
-            <span
-              style={{
-                fontSize: '0.6875rem',
-                fontWeight: 600,
-                color: '#22c55e',
-                border: '1px solid rgba(34, 197, 94, 0.4)',
-                padding: '1px 5px',
-                borderRadius: '4px',
-                background: 'rgba(34, 197, 94, 0.05)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.02em',
-              }}
-            >
-              Free
-            </span>
-            <ChevronDown size={14} color="#8b949e" style={{ marginLeft: '-0.125rem' }} />
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', minWidth: 0, flexWrap: 'wrap' }}>
+          {/* Home Link */}
+          <Link
+            href="/projects"
+            style={{
+              fontSize: '0.875rem',
+              color: '#8b949e',
+              fontWeight: 500,
+              textDecoration: 'none',
+            }}
+            className="topbar-breadcrumb-link"
+          >
+            Home
+          </Link>
+
+          <span style={{ color: '#30363d', fontSize: '0.875rem' }}>/</span>
+
+          {/* Projects Link */}
+          <Link
+            href="/projects"
+            style={{
+              fontSize: '0.875rem',
+              color: '#8b949e',
+              fontWeight: 500,
+              textDecoration: 'none',
+            }}
+            className="topbar-breadcrumb-link"
+          >
+            projects
+          </Link>
 
           <span style={{ color: '#30363d', fontSize: '0.875rem' }}>/</span>
 
@@ -93,8 +113,8 @@ export default function Topbar({ title, breadcrumb }: TopbarProps) {
             href={`/projects/${projectId}/dashboard`}
             style={{
               fontSize: '0.875rem',
-              color: '#ffffff',
-              fontWeight: 600,
+              color: isInsideDatabase ? '#8b949e' : '#ffffff',
+              fontWeight: isInsideDatabase ? 500 : 600,
               textDecoration: 'none',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -105,51 +125,140 @@ export default function Topbar({ title, breadcrumb }: TopbarProps) {
             {project?.name ?? 'Loading...'}
           </Link>
 
-          <span style={{ color: '#30363d', fontSize: '0.875rem' }}>/</span>
+          {isInsideDatabase ? (
+            <>
+              <span style={{ color: '#30363d', fontSize: '0.875rem' }}>/</span>
+              
+              {/* Database Section Link */}
+              <Link
+                href={`/projects/${projectId}/database`}
+                style={{
+                  fontSize: '0.875rem',
+                  color: '#8b949e',
+                  fontWeight: 500,
+                  textDecoration: 'none',
+                }}
+                className="topbar-breadcrumb-link"
+              >
+                Database
+              </Link>
 
-          {/* Branch & Env */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#8b949e', fontSize: '0.875rem', fontWeight: 500, cursor: 'pointer' }}>
-            <span className="topbar-breadcrumb-link">Main</span>
-            <span
-              style={{
-                fontSize: '0.6875rem',
-                fontWeight: 600,
-                color: '#d29922',
-                border: '1px solid rgba(210, 153, 34, 0.4)',
-                padding: '1px 5px',
-                borderRadius: '4px',
-                background: 'rgba(210, 153, 34, 0.05)',
-                textTransform: 'capitalize',
-              }}
-            >
-              Production
-            </span>
-            <ChevronDown size={14} color="#8b949e" style={{ marginLeft: '-0.125rem' }} />
-          </div>
+              <span style={{ color: '#30363d', fontSize: '0.875rem' }}>/</span>
+
+              {/* Database Link */}
+              <Link
+                href={`/projects/${projectId}/database/${databaseId}`}
+                style={{
+                  fontSize: '0.875rem',
+                  color: segments[4] ? '#8b949e' : '#ffffff',
+                  fontWeight: segments[4] ? 500 : 600,
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+                className="topbar-breadcrumb-link"
+              >
+                {database?.name ?? 'Loading...'}
+              </Link>
+
+              {segments[4] && (
+                <>
+                  <span style={{ color: '#30363d', fontSize: '0.875rem' }}>/</span>
+                  <span
+                    style={{
+                      fontSize: '0.875rem',
+                      color: '#ffffff',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {segments[4] === 'collections' ? 'Collections' :
+                     segments[4] === 'storage' ? 'Storage' :
+                     segments[4] === 'queries' ? 'Queries' :
+                     segments[4] === 'indexes' ? 'Indexes' :
+                     segments[4] === 'replication' ? 'Replication' :
+                     segments[4] === 'settings' ? 'Settings' :
+                     segments[4].charAt(0).toUpperCase() + segments[4].slice(1)}
+                  </span>
+                </>
+              )}
+            </>
+          ) : (
+            segments[2] && segments[2] !== 'dashboard' && (
+              <>
+                <span style={{ color: '#30363d', fontSize: '0.875rem' }}>/</span>
+                <span
+                  style={{
+                    fontSize: '0.875rem',
+                    color: '#ffffff',
+                    fontWeight: 600,
+                  }}
+                >
+                  {segments[2] === 'features' ? 'Features' :
+                   segments[2] === 'team' ? 'Team' :
+                   segments[2] === 'merges' ? 'Deployment History' :
+                   segments[2] === 'codebases' ? 'Contributions' :
+                   segments[2] === 'database' ? 'Database' :
+                   segments[2] === 'storage' ? 'Storage' :
+                   segments[2] === 'sql' ? 'SQL Editor' :
+                   segments[2] === 'functions' ? 'Functions' :
+                   segments[2] === 'realtime' ? 'Realtime' :
+                   segments[2] === 'gateway' ? 'Model Gateway' :
+                   segments[2] === 'sites' ? 'Sites' :
+                   segments[2] === 'compute' ? 'Compute' :
+                   segments[2] === 'payments' ? 'Payments' :
+                   segments[2] === 'logs' ? 'Logs' :
+                   segments[2] === 'install' ? 'Install' :
+                   segments[2] === 'doc' ? 'Doc' :
+                   segments[2] === 'settings' ? 'Settings' :
+                   segments[2].charAt(0).toUpperCase() + segments[2].slice(1)}
+                </span>
+              </>
+            )
+          )}
         </div>
       ) : (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-          {breadcrumb?.map((crumb, i) => (
-            <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {i > 0 && <span style={{ color: '#8b949e', fontSize: '0.875rem' }}>/</span>}
-              {crumb.href ? (
-                <a
-                  href={crumb.href}
-                  style={{ fontSize: '0.875rem', color: '#58a6ff', fontWeight: 500 }}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', minWidth: 0 }}>
+          {breadcrumb ? (
+            breadcrumb.map((crumb, i) => (
+              <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {i > 0 && <span style={{ color: '#8b949e', fontSize: '0.875rem' }}>/</span>}
+                {crumb.href ? (
+                  <Link
+                    href={crumb.href}
+                    style={{ fontSize: '0.875rem', color: '#58a6ff', fontWeight: 500 }}
+                  >
+                    {crumb.label}
+                  </Link>
+                ) : (
+                  <span style={{ fontSize: '0.875rem', color: '#ffffff', fontWeight: 600 }}>
+                    {crumb.label}
+                  </span>
+                )}
+              </span>
+            ))
+          ) : (
+            segments[0] === 'projects' && segments.length === 1 ? (
+              <span style={{ fontSize: '0.875rem', color: '#ffffff', fontWeight: 600 }}>Home</span>
+            ) : (
+              <>
+                <Link
+                  href="/projects"
+                  style={{ fontSize: '0.875rem', color: '#8b949e', fontWeight: 500, textDecoration: 'none' }}
+                  className="topbar-breadcrumb-link"
                 >
-                  {crumb.label}
-                </a>
-              ) : (
-                <span style={{ fontSize: '0.875rem', color: '#ffffff', fontWeight: 600 }}>
-                  {crumb.label}
-                </span>
-              )}
-            </span>
-          ))}
-          {title && !breadcrumb && (
-            <h1 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#ffffff', margin: 0 }}>
-              {title}
-            </h1>
+                  Home
+                </Link>
+                {segments[0] && (
+                  <>
+                    <span style={{ color: '#30363d', fontSize: '0.875rem' }}>/</span>
+                    <span style={{ fontSize: '0.875rem', color: '#ffffff', fontWeight: 600, textTransform: 'capitalize' }}>
+                      {segments[0] === 'projects' && segments[1] === 'new' ? 'New Project' : segments[0]}
+                    </span>
+                  </>
+                )}
+              </>
+            )
           )}
         </div>
       )}

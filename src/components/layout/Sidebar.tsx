@@ -26,7 +26,10 @@ import {
   BookOpen,
   GitPullRequest,
   GitMerge,
-  GitBranch
+  GitBranch,
+  Bell,
+  Network,
+  Layers
 } from 'lucide-react'
 import { useSidebar } from '@/components/layout/SidebarContext'
 
@@ -35,18 +38,21 @@ export default function Sidebar() {
   const { isCollapsed, toggleSidebar } = useSidebar()
 
   const segments = pathname.split('/').filter(Boolean)
-  const isInsideProject = segments[0] === 'projects' && segments[1] && segments[1] !== 'new'
-  const projectId = isInsideProject ? segments[1] : null
+  
+  // Database sub-nav state
+  const isInsideDatabase = segments[0] === 'projects' && segments[2] === 'database' && segments[3] && segments[3] !== 'new'
+  const databaseId = isInsideDatabase ? segments[3] : null
 
-  // Default outer sidebar items
+  // Project sub-nav state
+  const isInsideProject = segments[0] === 'projects' && segments[1] && segments[1] !== 'new'
+  const projectId = isInsideProject ? segments[1] : (isInsideDatabase ? segments[1] : null)
+
+  // Default outer global sidebar items (reverted Databases link)
   const globalNavItems = [
     { href: '/projects', label: 'Projects', icon: FolderKanban },
-    { href: '/usage', label: 'Usage', icon: BarChart3 },
-    { href: '/members', label: 'Members', icon: Users },
-    { href: '/subscriptions', label: 'Subscriptions', icon: CreditCard },
   ]
 
-  // Project-specific sidebar items matching the screenshot
+  // Project-specific sidebar items
   const projectNavItems = [
     { href: `/projects/${projectId}/dashboard`, label: 'Dashboard', icon: Home },
     { href: `/projects/${projectId}/features`, label: 'Features', icon: GitPullRequest },
@@ -54,25 +60,28 @@ export default function Sidebar() {
     { href: `/projects/${projectId}/merges`, label: 'Deployment History', icon: GitMerge },
     { href: `/projects/${projectId}/codebases`, label: 'Contributions', icon: GitBranch },
     { href: `/projects/${projectId}/database`, label: 'Database', icon: Database },
-    { href: `/projects/${projectId}/storage`, label: 'Storage', icon: HardDrive },
-    
-    // SQL/Functions group
-    { href: `/projects/${projectId}/sql`, label: 'SQL Editor', icon: SquareTerminal, isDividerBefore: true },
-    { href: `/projects/${projectId}/functions`, label: 'Functions', icon: Code2 },
-    { href: `/projects/${projectId}/realtime`, label: 'Realtime', icon: Radio },
-    { href: `/projects/${projectId}/gateway`, label: 'Model Gateway', icon: Sparkles },
-    { href: `/projects/${projectId}/sites`, label: 'Sites', icon: Globe },
-    { href: `/projects/${projectId}/compute`, label: 'Compute', icon: Cpu },
-    { href: `/projects/${projectId}/payments`, label: 'Payments', icon: CreditCard },
-    
-    // Logs/Docs group
-    { href: `/projects/${projectId}/logs`, label: 'Logs', icon: LineChart, isDividerBefore: true },
-    { href: `/projects/${projectId}/install`, label: 'Install', icon: Download },
-    { href: `/projects/${projectId}/doc`, label: 'Doc', icon: BookOpen },
   ]
 
-  const navItems = isInsideProject ? projectNavItems : globalNavItems
-  const settingsHref = isInsideProject ? `/projects/${projectId}/settings` : '/settings'
+  // Database-specific sidebar items under `/projects/[projectId]/database/[databaseId]/...`
+  const databaseNavItems = [
+    { href: `/projects/${projectId}/database/${databaseId}`, label: 'Overview', icon: Home },
+    { href: `/projects/${projectId}/database/${databaseId}/collections`, label: 'Collections', icon: Layers },
+    { href: `/projects/${projectId}/database/${databaseId}/storage`, label: 'Storage Analytics', icon: HardDrive },
+    { href: `/projects/${projectId}/database/${databaseId}/queries`, label: 'Query Analytics', icon: SquareTerminal },
+    { href: `/projects/${projectId}/database/${databaseId}/indexes`, label: 'Index Analytics', icon: Code2 },
+    { href: `/projects/${projectId}/database/${databaseId}/replication`, label: 'Replication', icon: Network },
+  ]
+
+  let navItems = globalNavItems
+  let settingsHref = '/settings'
+
+  if (isInsideDatabase) {
+    navItems = databaseNavItems
+    settingsHref = `/projects/${projectId}/database/${databaseId}/settings`
+  } else if (isInsideProject) {
+    navItems = projectNavItems
+    settingsHref = `/projects/${projectId}/settings`
+  }
 
   return (
     <div
@@ -96,68 +105,51 @@ export default function Sidebar() {
           height: '56px',
           display: 'flex',
           alignItems: 'center',
-          padding: isCollapsed ? '0' : '0 1rem',
-          justifyContent: isCollapsed ? 'center' : 'space-between',
+          paddingLeft: isCollapsed ? '18px' : '16px',
+          paddingRight: '16px',
           borderBottom: '1px solid #27272a',
-          gap: '0.5rem',
           overflow: 'hidden',
           flexShrink: 0,
+          transition: 'padding-left 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
           {/* Logo icon */}
-          <div
+          <img
+            src="/logo.png"
+            alt="DevHub Logo"
+            onClick={toggleSidebar}
+            className="sidebar-logo"
             style={{
               width: '28px',
               height: '28px',
               borderRadius: '6px',
-              border: '1px solid #22c55e',
-              background: 'rgba(34, 197, 94, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              objectFit: 'contain',
               flexShrink: 0,
+              cursor: 'pointer',
+              transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          />
+          
+          <span
+            style={{
+              marginLeft: isCollapsed ? '0px' : '12px',
+              transition: 'margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              opacity: isCollapsed ? 0 : 1,
+              maxWidth: isCollapsed ? '0px' : '150px',
+              fontWeight: 800,
+              fontSize: '1rem',
+              color: '#ffffff',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              letterSpacing: '-0.02em',
+              display: 'inline-block',
             }}
           >
-            <Hexagon size={16} color="#22c55e" />
-          </div>
-          
-          {!isCollapsed && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-              <span
-                style={{
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  color: '#ffffff',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                Personal Org
-              </span>
-              <span
-                style={{
-                  fontSize: '0.6875rem',
-                  fontWeight: 600,
-                  color: '#22c55e',
-                  border: '1px solid rgba(34, 197, 94, 0.4)',
-                  padding: '1px 5px',
-                  borderRadius: '4px',
-                  background: 'rgba(34, 197, 94, 0.05)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.02em',
-                }}
-              >
-                Free
-              </span>
-            </div>
-          )}
+            DevHub
+          </span>
         </div>
-
-        {!isCollapsed && (
-          <ChevronDown size={14} color="#8b949e" style={{ flexShrink: 0 }} />
-        )}
       </div>
 
       {/* Navigation menu */}
@@ -172,14 +164,21 @@ export default function Sidebar() {
         }}
         className="sidebar-nav"
       >
-        {navItems.map((item, index) => {
+        {navItems.map((item) => {
           const { href, label, icon: Icon, isDividerBefore } = item as {
             href: string
             label: string
             icon: React.ComponentType<{ size: number; color?: string; style?: React.CSSProperties }>
             isDividerBefore?: boolean
           }
-          const isActive = pathname === href || pathname.startsWith(href + '/')
+          
+          // Check if link is active
+          // Prevent parent index page from highlighting all child pages
+          const isActive = pathname === href || (
+            href !== `/projects/${projectId}/database/${databaseId}` && 
+            href !== `/projects/${projectId}/dashboard` && 
+            pathname.startsWith(href + '/')
+          )
           
           return (
             <div key={href} style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
@@ -195,19 +194,21 @@ export default function Sidebar() {
               )}
               <Link
                 href={href}
+                title={isCollapsed ? label : undefined}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: isCollapsed ? '0.625rem 0' : '0.625rem 0.75rem',
-                  justifyContent: isCollapsed ? 'center' : 'flex-start',
+                  paddingTop: '0.625rem',
+                  paddingBottom: '0.625rem',
+                  paddingLeft: isCollapsed ? '11px' : '12px',
+                  paddingRight: '12px',
                   borderRadius: '8px',
                   color: isActive ? '#ffffff' : '#8b949e',
                   backgroundColor: isActive ? '#27272a' : 'transparent',
                   fontSize: '0.875rem',
                   fontWeight: 500,
                   textDecoration: 'none',
-                  transition: 'all 0.15s ease',
+                  transition: 'padding-left 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.15s ease, background-color 0.15s ease',
                 }}
                 className="sidebar-nav-link"
               >
@@ -216,7 +217,19 @@ export default function Sidebar() {
                   color={isActive ? '#22c55e' : 'currentColor'} 
                   style={{ flexShrink: 0 }}
                 />
-                {!isCollapsed && <span>{label}</span>}
+                <span
+                  style={{
+                    marginLeft: isCollapsed ? '0px' : '12px',
+                    transition: 'margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    opacity: isCollapsed ? 0 : 1,
+                    maxWidth: isCollapsed ? '0px' : '150px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    display: 'inline-block',
+                  }}
+                >
+                  {label}
+                </span>
               </Link>
             </div>
           )
@@ -234,61 +247,16 @@ export default function Sidebar() {
           flexShrink: 0,
         }}
       >
-        {/* Settings */}
-        <Link
-          href={settingsHref}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: isCollapsed ? '0.625rem 0' : '0.625rem 0.75rem',
-            justifyContent: isCollapsed ? 'center' : 'flex-start',
-            borderRadius: '8px',
-            color: pathname.startsWith(settingsHref) ? '#ffffff' : '#8b949e',
-            backgroundColor: pathname.startsWith(settingsHref) ? '#27272a' : 'transparent',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            textDecoration: 'none',
-            transition: 'all 0.15s ease',
-          }}
-          className="sidebar-nav-link"
-        >
-          <Settings size={18} style={{ flexShrink: 0 }} />
-          {!isCollapsed && <span>Settings</span>}
-        </Link>
-
-        {/* Collapse toggle */}
-        <button
-          onClick={toggleSidebar}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: isCollapsed ? '0.625rem 0' : '0.625rem 0.75rem',
-            justifyContent: isCollapsed ? 'center' : 'flex-start',
-            borderRadius: '8px',
-            color: '#8b949e',
-            background: 'transparent',
-            border: 'none',
-            width: '100%',
-            cursor: 'pointer',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            transition: 'all 0.15s ease',
-            textAlign: 'left',
-          }}
-          className="sidebar-nav-link"
-        >
-          {isCollapsed ? (
-            <ChevronRight size={18} style={{ flexShrink: 0 }} />
-          ) : (
-            <ChevronLeft size={18} style={{ flexShrink: 0 }} />
-          )}
-          {!isCollapsed && <span>Collapse</span>}
-        </button>
+        
       </div>
 
       <style>{`
+        .sidebar-logo:hover {
+          transform: scale(1.08);
+        }
+        .sidebar-logo:active {
+          transform: scale(0.95);
+        }
         .sidebar-nav-link:hover {
           background-color: #212124 !important;
           color: #ffffff !important;
