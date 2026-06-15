@@ -12,7 +12,7 @@ export const authConfig: NextAuthConfig = {
       authorization: { params: { scope: 'read:user user:email repo' } },
     }),
   ],
-
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days

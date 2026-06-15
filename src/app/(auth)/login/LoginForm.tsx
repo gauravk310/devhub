@@ -50,34 +50,42 @@ export default function LoginForm({ signInGithub, signInGoogle }: LoginFormProps
           position: 'relative'
         }}>
 
-          <div style={{ width: '100%', maxWidth: '360px', margin: '0 auto' }}>
-            {/* Logo */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '2.5rem' }}>
-              <div style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                background: 'linear-gradient(135deg, #1f6feb, #58a6ff)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 0 16px rgba(31, 111, 235, 0.4)'
-              }}>
-                <GitBranch size={20} color="#fff" />
-              </div>
-              <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em' }}>DevHub</span>
+          {/* Logo in top left corner */}
+          <div style={{
+            position: 'absolute',
+            top: '2rem',
+            left: '2rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <div style={{
+              width: 38,
+              height: 38,
+              borderRadius: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 0 16px rgba(31, 111, 235, 0.4)',
+              overflow: 'hidden',
+              background: '#000000'
+            }}>
+              <img 
+                src="/logo.png" 
+                alt="DevHub Logo" 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain'
+                }}
+              />
             </div>
+            <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em' }}>DevHub</span>
+          </div>
+
+          <div style={{ width: '100%', maxWidth: '360px', margin: '0 auto' }}>
 
             {/* Title */}
-            <h1 style={{
-              fontSize: '2rem',
-              fontWeight: 800,
-              letterSpacing: '-0.04em',
-              margin: '0 0 0.5rem 0',
-              lineHeight: 1.15
-            }}>
-              Get Started
-            </h1>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
               {/* GitHub OAuth Button */}
               <form action={signInGithub}>
