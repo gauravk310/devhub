@@ -75,6 +75,21 @@ export default function CreateFeatureModal({ isOpen, onClose, onCreated, project
           />
         </div>
 
+        <div>
+          <label className="gh-label">Feature Type</label>
+          <select
+            className="gh-select"
+            value={type}
+            onChange={(e) => setType(e.target.value as any)}
+          >
+            <option value="FEATURE">Feature</option>
+            <option value="BUG FIX">Bug Fix</option>
+            <option value="UPDATE">Update</option>
+            <option value="DISCARD">Discard</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+
         {/* Codebase branches */}
         {codebases.length > 0 && (
           <div style={{ padding: '0.875rem', background: 'var(--color-canvas-inset)', borderRadius: '8px', border: '1px solid var(--color-border-muted)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -90,43 +105,6 @@ export default function CreateFeatureModal({ isOpen, onClose, onCreated, project
             ))}
           </div>
         )}
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-          <div>
-            <label className="gh-label">DB Change</label>
-            <input className="gh-input" value={dbChange} onChange={(e) => setDbChange(e.target.value)} placeholder="Migration needed?" />
-          </div>
-          <div>
-            <label className="gh-label">ENV Change</label>
-            <input className="gh-input" value={envChange} onChange={(e) => setEnvChange(e.target.value)} placeholder="New env vars?" />
-          </div>
-        </div>
-
-        <div>
-          <label className="gh-label">Changes Note</label>
-          <input className="gh-input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Additional instructions or notes..." />
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-          <div>
-            <label className="gh-label">Feature Type</label>
-            <select
-              className="gh-select"
-              value={type}
-              onChange={(e) => setType(e.target.value as any)}
-            >
-              <option value="FEATURE">Feature</option>
-              <option value="BUG FIX">Bug Fix</option>
-              <option value="UPDATE">Update</option>
-              <option value="DISCARD">Discard</option>
-              <option value="OTHER">Other</option>
-            </select>
-          </div>
-          <div>
-            <label className="gh-label">Deployment Date</label>
-            <input type="date" className="gh-input" value={deploymentDate} onChange={(e) => setDeploymentDate(e.target.value)} disabled />
-          </div>
-        </div>
 
         {error && <p style={{ color: 'var(--color-danger-fg)', fontSize: '0.875rem', margin: 0 }}>{error}</p>}
 
