@@ -218,6 +218,11 @@
     background-color: var(--color-danger-emphasis);
     color: var(--color-fg-on-emphasis);
   }
+  .gh-btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
 
   /* ── Input ── */
   .gh-input {

@@ -21,6 +21,7 @@ export interface IProjectDocument extends Document {
   hasQA: boolean
   qaBranches: IQABranch[]
   members: Types.ObjectId[]
+  status: 'ACTIVE' | 'DEACTIVATED'
   createdAt: Date
   updatedAt: Date
 }
@@ -46,6 +47,7 @@ const ProjectSchema = new Schema<IProjectDocument>(
     hasQA: { type: Boolean, default: false },
     qaBranches: { type: [QABranchSchema], default: [] },
     members: [{ type: Schema.Types.ObjectId, ref: 'User', index: true }],
+    status: { type: String, enum: ['ACTIVE', 'DEACTIVATED'], default: 'ACTIVE' },
   },
   { timestamps: true }
 )
@@ -53,5 +55,8 @@ const ProjectSchema = new Schema<IProjectDocument>(
 // Compound index: find all projects for a member
 ProjectSchema.index({ members: 1, createdAt: -1 })
 
-const Project = models.Project ?? model<IProjectDocument>('Project', ProjectSchema)
+if (models.Project) {
+  delete (models as any).Project
+}
+const Project = model<IProjectDocument>('Project', ProjectSchema)
 export default Project

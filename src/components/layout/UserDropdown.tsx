@@ -5,10 +5,12 @@ import { useState, useRef, useEffect } from 'react'
 import { LogOut, User, ChevronDown } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 import Link from 'next/link'
+import SwalConfirm from '@/components/ui/SwalConfirm'
 
 export default function UserDropdown() {
   const { data: session } = useSession()
   const [open, setOpen] = useState(false)
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export default function UserDropdown() {
           <img
             src={session.user.image}
             alt={session.user.name ?? ''}
-            style={{ width: 26, height: 26, borderRadius: '50%', border: '2px solid #e24a3b' }}
+            style={{ width: 26, height: 26, borderRadius: '50%', border: '2px solid var(--color-border-default)' }}
           />
         ) : (
           <div style={{
@@ -123,7 +125,10 @@ export default function UserDropdown() {
             </Link>
 
             <button
-              onClick={() => signOut({ callbackUrl: '/login' })}
+              onClick={() => {
+                setOpen(false)
+                setShowSignOutConfirm(true)
+              }}
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
                 width: '100%', padding: '0.5rem 0.75rem', borderRadius: '6px',
@@ -140,6 +145,16 @@ export default function UserDropdown() {
           </div>
         </div>
       )}
+      {/* Sign Out Confirmation Modal */}
+      <SwalConfirm
+        isOpen={showSignOutConfirm}
+        onClose={() => setShowSignOutConfirm(false)}
+        onConfirm={() => signOut({ callbackUrl: '/login' })}
+        title="Sign Out?"
+        message="Are you sure you want to sign out of your DevHub account?"
+        confirmText="Sign Out"
+        cancelText="Cancel"
+      />
     </div>
   )
 }

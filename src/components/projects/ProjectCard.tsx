@@ -29,17 +29,50 @@ export default function ProjectCard({ project }: Props) {
       ? project.ownerId._id?.toString() === session?.user?.id
       : project.ownerId.toString() === session?.user?.id
 
+  const isDeactivated = project.status === 'DEACTIVATED'
+
+  const handleClick = () => {
+    if (isDeactivated && !isOwner) {
+      return // Non-owners cannot open deactivated projects
+    }
+    router.push(`/projects/${project._id}/dashboard`)
+  }
+
   return (
     <div
       className="gh-card"
-      onClick={() => router.push(`/projects/${project._id}/dashboard`)}
-      style={{ padding: '1.25rem', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '0.875rem' }}
+      onClick={handleClick}
+      style={{
+        padding: '1.25rem',
+        cursor: isDeactivated && !isOwner ? 'not-allowed' : 'pointer',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.875rem',
+        opacity: isDeactivated && !isOwner ? 0.6 : 1,
+        transition: 'all 0.2s ease',
+      }}
     >
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-        <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--color-fg-default)', margin: 0, lineHeight: 1.3 }}>
-          {project.name}
-        </h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--color-fg-default)', margin: 0, lineHeight: 1.3 }}>
+            {project.name}
+          </h3>
+          {isDeactivated && (
+            <span style={{
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              color: 'var(--color-danger-fg)',
+              backgroundColor: 'var(--color-danger-muted)',
+              border: '1px solid var(--color-danger-emphasis)',
+              padding: '0.125rem 0.5rem',
+              borderRadius: '9999px',
+              whiteSpace: 'nowrap'
+            }}>
+              Deactivated
+            </span>
+          )}
+        </div>
         {isOwner && (
           <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', fontWeight: 600, color: 'var(--color-attention-fg)', background: 'var(--color-attention-muted)', padding: '0.125rem 0.5rem', borderRadius: '9999px', whiteSpace: 'nowrap' }}>
             <Crown size={10} />

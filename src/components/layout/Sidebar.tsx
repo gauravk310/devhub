@@ -240,18 +240,58 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer section */}
-      <div
-        style={{
-          padding: '0.75rem',
-          borderTop: '1px solid #27272a',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.25rem',
-          flexShrink: 0,
-        }}
-      >
-        
-      </div>
+      {isInsideProject && (
+        <div
+          style={{
+            padding: '0.75rem',
+            borderTop: '1px solid #27272a',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.25rem',
+            flexShrink: 0,
+          }}
+        >
+          <Link
+            href={settingsHref}
+            title={isCollapsed ? 'Settings' : undefined}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              paddingTop: '0.625rem',
+              paddingBottom: '0.625rem',
+              paddingLeft: isCollapsed ? '11px' : '12px',
+              paddingRight: '12px',
+              borderRadius: '8px',
+              color: pathname === settingsHref ? '#ffffff' : '#8b949e',
+              backgroundColor: pathname === settingsHref ? '#27272a' : 'transparent',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              textDecoration: 'none',
+              transition: 'padding-left 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.15s ease, background-color 0.15s ease',
+            }}
+            className="sidebar-nav-link"
+          >
+            <Settings 
+              size={18} 
+              color={pathname === settingsHref ? '#22c55e' : 'currentColor'} 
+              style={{ flexShrink: 0 }}
+            />
+            <span
+              style={{
+                marginLeft: isCollapsed ? '0px' : '12px',
+                transition: 'margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                opacity: isCollapsed ? 0 : 1,
+                maxWidth: isCollapsed ? '0px' : '150px',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                display: 'inline-block',
+              }}
+            >
+              Settings
+            </span>
+          </Link>
+        </div>
+      )}
 
       <style>{`
         .sidebar-logo:hover {

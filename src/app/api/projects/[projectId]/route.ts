@@ -29,6 +29,11 @@ export async function GET(_: NextRequest, { params }: Params) {
   )
   if (!isMember) return Response.json({ error: 'Forbidden' }, { status: 403 })
 
+  const isOwner = ((project.ownerId as any)._id || project.ownerId).toString() === session.user!.id
+  if (project.status === 'DEACTIVATED' && !isOwner) {
+    return Response.json({ error: 'Project is deactivated', status: 'DEACTIVATED' }, { status: 403 })
+  }
+
   return Response.json({ data: project })
 }
 
@@ -47,13 +52,20 @@ export async function PUT(req: NextRequest, { params }: Params) {
     return Response.json({ error: 'Forbidden — owner only' }, { status: 403 })
 
   const body = await req.json()
-  const { name, domain, hasQA, qaBranches, codebases } = body
+  const { name, domain, hasQA, qaBranches, codebases, status } = body
 
   if (name) project.name = name.trim()
   if (domain !== undefined) project.domain = domain.trim()
   if (hasQA !== undefined) project.hasQA = hasQA
   if (qaBranches) project.qaBranches = qaBranches
   if (codebases) project.codebases = codebases
+  if (status !== undefined) {
+    if (status === 'ACTIVE' || status === 'DEACTIVATED') {
+      project.status = status
+    } else {
+      return Response.json({ error: 'Invalid status value' }, { status: 400 })
+    }
+  }
 
   await project.save()
   return Response.json({ data: project })

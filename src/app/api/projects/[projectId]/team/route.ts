@@ -24,14 +24,14 @@ export async function GET(_: NextRequest, { params }: Params) {
 
   if (!project) return Response.json({ error: 'Not found' }, { status: 404 })
 
-  const isMember = project.members.some(
-    (m: { _id: { toString(): string } }) => m._id.toString() === session.user!.id
+  const isMember = (project.members as any[]).some(
+    (m: any) => (m._id || m).toString() === session.user!.id
   )
   if (!isMember) return Response.json({ error: 'Forbidden' }, { status: 403 })
 
-  const members = project.members.map((m: { _id: { toString(): string } } & Record<string, unknown>) => ({
+  const members = (project.members as any[]).map((m: any) => ({
     ...m,
-    role: m._id.toString() === project.ownerId.toString() ? 'Owner' : 'Member',
+    role: (m._id || m).toString() === project.ownerId.toString() ? 'Owner' : 'Member',
   }))
 
   const invites = await Notification.find({

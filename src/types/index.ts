@@ -71,6 +71,7 @@ export interface IProject {
   hasQA: boolean
   qaBranches: IQABranch[]
   members: ObjectId[]
+  status?: 'ACTIVE' | 'DEACTIVATED'
   createdAt: Date
   updatedAt: Date
 }
