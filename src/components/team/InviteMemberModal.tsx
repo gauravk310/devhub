@@ -54,9 +54,8 @@ export default function InviteMemberModal({ isOpen, onClose, projectId, onInvite
         body: JSON.stringify({ recipientEmail: selected.email }),
       })
       if (!res.ok) { const j = await res.json(); throw new Error(j.error || 'Failed') }
-      setSuccess(`Invite sent to ${selected.name}!`)
-      setSelected(null); setQuery('')
       onInvited()
+      handleClose()
     } catch (e) {
       setError((e as Error).message)
     } finally {

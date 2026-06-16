@@ -54,3 +54,25 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   return Response.json({ data: notification }, { status: 201 })
 }
+
+// DELETE /api/projects/:id/team/invite
+export async function DELETE(req: NextRequest, { params }: Params) {
+  const session = await auth()
+  if (!session?.user?.id) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { projectId } = await params
+  const url = new URL(req.url)
+  const inviteId = url.searchParams.get('id')
+
+  if (!isValidObjectId(projectId) || !inviteId || !isValidObjectId(inviteId))
+    return Response.json({ error: 'Invalid ID' }, { status: 400 })
+
+  await dbConnect()
+  const project = await Project.findById(projectId)
+  if (!project) return Response.json({ error: 'Not found' }, { status: 404 })
+  if (project.ownerId.toString() !== session.user.id)
+    return Response.json({ error: 'Forbidden — owner only' }, { status: 403 })
+
+  await Notification.findOneAndDelete({ _id: inviteId, projectId, type: 'PROJECT_INVITE' })
+  return Response.json({ data: { deleted: true } })
+}

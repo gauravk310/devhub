@@ -50,6 +50,7 @@ export default function Sidebar() {
   // Default outer global sidebar items (reverted Databases link)
   const globalNavItems = [
     { href: '/projects', label: 'Projects', icon: FolderKanban },
+    { href: '/notifications', label: 'Notifications', icon: Bell },
   ]
 
   // Project-specific sidebar items

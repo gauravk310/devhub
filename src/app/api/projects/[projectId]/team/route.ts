@@ -5,6 +5,8 @@ import User from '@/models/User'
 import { isValidObjectId } from '@/lib/utils'
 import type { NextRequest } from 'next/server'
 
+import Notification from '@/models/Notification'
+
 type Params = { params: Promise<{ projectId: string }> }
 
 // GET /api/projects/:id/team
@@ -32,7 +34,21 @@ export async function GET(_: NextRequest, { params }: Params) {
     role: m._id.toString() === project.ownerId.toString() ? 'Owner' : 'Member',
   }))
 
-  return Response.json({ data: members, ownerId: project.ownerId.toString() })
+  const invites = await Notification.find({
+    projectId,
+    type: 'PROJECT_INVITE',
+    status: 'UNREAD',
+  })
+    .populate('recipientId', 'name email image githubUsername')
+    .lean()
+
+  const formattedInvites = invites.map((inv: any) => ({
+    _id: inv._id.toString(),
+    recipient: inv.recipientId,
+    createdAt: inv.createdAt,
+  }))
+
+  return Response.json({ data: members, ownerId: project.ownerId.toString(), invites: formattedInvites })
 }
 
 // DELETE /api/projects/:id/team/:uid handled in separate route — 

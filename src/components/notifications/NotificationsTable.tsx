@@ -40,7 +40,7 @@ export default function NotificationsTable({ notifications, onSelect }: Props) {
       <table className="gh-table">
         <thead>
           <tr>
-            <th>Type</th>
+
             <th>Title</th>
             <th>From</th>
             <th>Project</th>
@@ -58,9 +58,7 @@ export default function NotificationsTable({ notifications, onSelect }: Props) {
                 onClick={() => onSelect(n)}
                 style={{ cursor: 'pointer' }}
               >
-                <td>
-                  <Icon size={15} color="var(--color-fg-muted)" />
-                </td>
+
                 <td style={{ fontWeight: n.status === 'UNREAD' ? 600 : 400 }}>
                   {n.title}
                 </td>
