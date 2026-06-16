@@ -31,40 +31,7 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sparksRef = useRef<Spark[]>([]);
-  const startTimeRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const parent = canvas.parentElement;
-    if (!parent) return;
-
-    let resizeTimeout: ReturnType<typeof setTimeout>;
-
-    const resizeCanvas = () => {
-      const { width, height } = parent.getBoundingClientRect();
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
-      }
-    };
-
-    const handleResize = () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(resizeCanvas, 100);
-    };
-
-    const ro = new ResizeObserver(handleResize);
-    ro.observe(parent);
-
-    resizeCanvas();
-
-    return () => {
-      ro.disconnect();
-      clearTimeout(resizeTimeout);
-    };
-  }, []);
+  const isAnimatingRef = useRef<boolean>(false);
 
   const easeFunc = useCallback(
     (t: number) => {
@@ -88,13 +55,25 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animationId: number;
+    let animationId: number | null = null;
+
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
     const draw = (timestamp: number) => {
-      if (!startTimeRef.current) {
-        startTimeRef.current = timestamp;
+      if (sparksRef.current.length === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        isAnimatingRef.current = false;
+        animationId = null;
+        return;
       }
-      ctx?.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       sparksRef.current = sparksRef.current.filter((spark: Spark) => {
         const elapsed = timestamp - spark.startTime;
@@ -126,36 +105,50 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
       animationId = requestAnimationFrame(draw);
     };
 
-    animationId = requestAnimationFrame(draw);
+    const handleWindowClick = (e: MouseEvent) => {
+      const now = performance.now();
+      const newSparks: Spark[] = Array.from({ length: sparkCount }, (_, i) => ({
+        x: e.clientX,
+        y: e.clientY,
+        angle: (2 * Math.PI * i) / sparkCount,
+        startTime: now
+      }));
+
+      sparksRef.current.push(...newSparks);
+
+      if (!isAnimatingRef.current) {
+        isAnimatingRef.current = true;
+        animationId = requestAnimationFrame(draw);
+      }
+    };
+
+    window.addEventListener('click', handleWindowClick, true);
 
     return () => {
-      cancelAnimationFrame(animationId);
+      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('click', handleWindowClick, true);
+      if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+      }
     };
   }, [sparkColor, sparkSize, sparkRadius, sparkCount, duration, easeFunc, extraScale]);
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>): void => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const now = performance.now();
-    const newSparks: Spark[] = Array.from({ length: sparkCount }, (_, i) => ({
-      x,
-      y,
-      angle: (2 * Math.PI * i) / sparkCount,
-      startTime: now
-    }));
-
-    sparksRef.current.push(...newSparks);
-  };
-
   return (
-    <div className="relative w-full h-full" onClick={handleClick}>
-      <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
+    <>
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          pointerEvents: 'none',
+          zIndex: 99999,
+        }}
+      />
       {children}
-    </div>
+    </>
   );
 };
 

@@ -40,6 +40,9 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (status !== undefined) {
     if (!VALID_STATUSES.includes(status))
       return Response.json({ error: 'Invalid status' }, { status: 400 })
+    if (feature.status === 'DEPLOYED' && status !== 'DEPLOYED') {
+      feature.deploymentDate = null
+    }
     feature.status = status
   }
   if (deploymentDate !== undefined)

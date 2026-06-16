@@ -5,7 +5,6 @@ import type { IProjectWithMembers, IFeaturePopulated, FeatureStatus } from '@/ty
 import FeaturesTable from '@/components/features/FeaturesTable'
 import CreateFeatureModal from '@/components/features/CreateFeatureModal'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import SwalConfirm from '@/components/ui/SwalConfirm'
 import { Plus } from 'lucide-react'
 
 export default function FeaturesPage({ params }: { params: Promise<{ projectId: string }> }) {
@@ -30,21 +29,17 @@ export default function FeaturesPage({ params }: { params: Promise<{ projectId: 
 
   const handleStatusUpdated = (featureId: string, newStatus: FeatureStatus) => {
     setFeatures((prev) =>
-      prev.map((f) => (f._id.toString() === featureId ? { ...f, status: newStatus } : f))
+      prev.map((f) => {
+        if (f._id.toString() === featureId) {
+          const updated = { ...f, status: newStatus }
+          if (f.status === 'DEPLOYED' && newStatus !== 'DEPLOYED') {
+            updated.deploymentDate = null
+          }
+          return updated
+        }
+        return f
+      })
     )
-  }
-
-  const [featureToDelete, setFeatureToDelete] = useState<string | null>(null)
-
-  const handleDelete = (featureId: string) => {
-    setFeatureToDelete(featureId)
-  }
-
-  const confirmDelete = async () => {
-    if (!featureToDelete) return
-    await fetch(`/api/projects/${projectId}/features/${featureToDelete}`, { method: 'DELETE' })
-    setFeatures((prev) => prev.filter((f) => f._id.toString() !== featureToDelete))
-    setFeatureToDelete(null)
   }
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}><LoadingSpinner size={28} /></div>
@@ -67,7 +62,6 @@ export default function FeaturesPage({ params }: { params: Promise<{ projectId: 
         ownerId={typeof project?.ownerId === 'object' ? project.ownerId._id?.toString() ?? '' : project?.ownerId ?? ''}
         onAddFeature={() => setShowCreate(true)}
         onStatusUpdated={handleStatusUpdated}
-        onDelete={handleDelete}
       />
 
       <CreateFeatureModal
@@ -76,16 +70,6 @@ export default function FeaturesPage({ params }: { params: Promise<{ projectId: 
         onCreated={load}
         projectId={projectId}
         codebases={project?.codebases ?? []}
-      />
-
-      <SwalConfirm
-        isOpen={!!featureToDelete}
-        onClose={() => setFeatureToDelete(null)}
-        onConfirm={confirmDelete}
-        title="Delete this feature?"
-        message="This action cannot be undone. This feature will be permanently removed from the project."
-        confirmText="Delete"
-        cancelText="Cancel"
       />
     </div>
   )

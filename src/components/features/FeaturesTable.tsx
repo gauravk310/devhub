@@ -4,7 +4,7 @@ import { useState } from 'react'
 import type { IFeaturePopulated, ICodebase, FeatureStatus } from '@/types'
 import FeatureStatusBadge from './FeatureStatusBadge'
 import { formatDate, truncate, getInitials } from '@/lib/utils'
-import { Trash2, Plus, Database, Key, GitBranch } from 'lucide-react'
+import { Plus, Database, Key, GitBranch, Search, User as UserIcon, Tag, Layers } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Modal from '@/components/ui/Modal'
 
@@ -15,7 +15,6 @@ interface Props {
   ownerId: string
   onAddFeature: () => void
   onStatusUpdated: (featureId: string, status: FeatureStatus) => void
-  onDelete: (featureId: string) => void
 }
 
 const TYPE_STYLES: Record<string, { bg: string; fg: string; border: string }> = {
@@ -27,12 +26,17 @@ const TYPE_STYLES: Record<string, { bg: string; fg: string; border: string }> = 
 const DEFAULT_TYPE_STYLE = { bg: '#3a301f', fg: '#f0cf9c', border: '#5c4a2b' }
 
 export default function FeaturesTable({
-  features, codebases, projectId, ownerId, onAddFeature, onStatusUpdated, onDelete,
+  features, codebases, projectId, ownerId, onAddFeature, onStatusUpdated,
 }: Props) {
   const { data: session } = useSession()
   const isOwner = session?.user?.id === ownerId
   const [selectedFeatureForChanges, setSelectedFeatureForChanges] = useState<IFeaturePopulated | null>(null)
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
+  
+  const [searchQuery, setSearchQuery] = useState('')
+  const [authorFilter, setAuthorFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState<FeatureStatus | 'ALL'>('ALL')
+  const [typeFilter, setTypeFilter] = useState<string>('ALL')
 
   if (features.length === 0) {
     return (
@@ -76,8 +80,152 @@ export default function FeaturesTable({
     )
   }
 
+  // Extract unique authors safely
+  const uniqueAuthors = Array.from(
+    new Map(
+      features
+        .filter((f) => f.authorId && f.authorId.name && f.authorId._id)
+        .map((f) => [f.authorId._id.toString(), f.authorId])
+    ).values()
+  )
+
+  const filteredFeatures = features.filter((f) => {
+    // 1. Search Query
+    const q = searchQuery.toLowerCase().trim()
+    if (q) {
+      const matchesName = f.name?.toLowerCase().includes(q)
+      const matchesDesc = f.description?.toLowerCase().includes(q)
+      const matchesBranch = f.codebaseBranches?.some((b) => b.branchName?.toLowerCase().includes(q))
+      const matchesType = f.type?.toLowerCase().includes(q)
+      const matchesAuthor = f.authorId?.name?.toLowerCase().includes(q)
+      if (!matchesName && !matchesDesc && !matchesBranch && !matchesType && !matchesAuthor) {
+        return false
+      }
+    }
+
+    // 2. Author Filter
+    if (authorFilter && f.authorId?._id?.toString() !== authorFilter) {
+      return false
+    }
+
+    // 3. Status Filter
+    if (statusFilter !== 'ALL' && f.status !== statusFilter) {
+      return false
+    }
+
+    // 4. Type Filter
+    if (typeFilter !== 'ALL' && f.type !== typeFilter) {
+      return false
+    }
+
+    return true
+  })
+
   return (
     <>
+      {/* Search & Filters Bar */}
+      <div style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.75rem',
+        alignItems: 'center',
+        padding: '0.875rem 1.25rem',
+        background: 'var(--color-canvas-subtle)',
+        border: '1px solid var(--color-border-default)',
+        borderRadius: '10px',
+        marginBottom: '1rem',
+      }}>
+        {/* Search */}
+        <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+          <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-fg-subtle)' }} />
+          <input
+            type="text"
+            placeholder="Search feature name, description, branch..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%', padding: '0.45rem 0.75rem 0.45rem 2rem', fontSize: '0.82rem',
+              borderRadius: '6px', border: '1px solid var(--color-border-default)',
+              background: 'var(--color-canvas-default)', color: 'var(--color-fg-default)',
+              outline: 'none', transition: 'border-color 0.15s',
+            }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--color-accent-fg)')}
+            onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--color-border-default)')}
+          />
+        </div>
+
+        {/* Author filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', minWidth: '150px' }}>
+          <UserIcon size={13} style={{ color: 'var(--color-fg-subtle)' }} />
+          <select
+            value={authorFilter}
+            onChange={(e) => setAuthorFilter(e.target.value)}
+            style={{
+              flex: 1, padding: '0.45rem 1.75rem 0.45rem 0.5rem', fontSize: '0.82rem',
+              borderRadius: '6px', border: '1px solid var(--color-border-default)',
+              background: 'var(--color-canvas-default)', color: 'var(--color-fg-default)',
+              outline: 'none', cursor: 'pointer', appearance: 'none',
+              backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%238b949e\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")',
+              backgroundPosition: 'right 0.35rem center', backgroundSize: '1rem', backgroundRepeat: 'no-repeat'
+            }}
+          >
+            <option value="">All Authors</option>
+            {uniqueAuthors.map((author) => (
+              <option key={author._id.toString()} value={author._id.toString()}>
+                {author.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Status filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', minWidth: '140px' }}>
+          <Tag size={13} style={{ color: 'var(--color-fg-subtle)' }} />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as FeatureStatus | 'ALL')}
+            style={{
+              flex: 1, padding: '0.45rem 1.75rem 0.45rem 0.5rem', fontSize: '0.82rem',
+              borderRadius: '6px', border: '1px solid var(--color-border-default)',
+              background: 'var(--color-canvas-default)', color: 'var(--color-fg-default)',
+              outline: 'none', cursor: 'pointer', appearance: 'none',
+              backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%238b949e\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")',
+              backgroundPosition: 'right 0.35rem center', backgroundSize: '1rem', backgroundRepeat: 'no-repeat'
+            }}
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="READY">Ready</option>
+            <option value="TESTING">Testing</option>
+            <option value="DEPLOYED">Deployed</option>
+            <option value="DISCARD">Discard</option>
+          </select>
+        </div>
+
+        {/* Type filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', minWidth: '130px' }}>
+          <Layers size={13} style={{ color: 'var(--color-fg-subtle)' }} />
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            style={{
+              flex: 1, padding: '0.45rem 1.75rem 0.45rem 0.5rem', fontSize: '0.82rem',
+              borderRadius: '6px', border: '1px solid var(--color-border-default)',
+              background: 'var(--color-canvas-default)', color: 'var(--color-fg-default)',
+              outline: 'none', cursor: 'pointer', appearance: 'none',
+              backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%238b949e\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")',
+              backgroundPosition: 'right 0.35rem center', backgroundSize: '1rem', backgroundRepeat: 'no-repeat'
+            }}
+          >
+            <option value="ALL">All Types</option>
+            <option value="BUG FIX">Bug Fix</option>
+            <option value="FEATURE">Feature</option>
+            <option value="UPDATE">Update</option>
+            <option value="DISCARD">Discard</option>
+          </select>
+        </div>
+      </div>
+
       <div
         style={{
           overflow: 'auto',
@@ -113,256 +261,228 @@ export default function FeaturesTable({
                   {label}
                 </th>
               ))}
-              {isOwner && (
-                <th
-                  style={{
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 10,
-                    background: '#202020',
-                    borderBottom: '1px solid #2e2e2e',
-                    width: '40px',
-                  }}
-                />
-              )}
             </tr>
           </thead>
           <tbody>
-            {features.map((f) => {
-              const fType = f.type || 'FEATURE'
-              const typeStyle = TYPE_STYLES[fType] || DEFAULT_TYPE_STYLE
-              const id = f._id.toString()
-              const isHovered = hoveredRow === id
-              const hasDb = !!f.dbChange?.trim()
-              const hasEnv = !!f.envChange?.trim()
-              const hasChanges = hasDb || hasEnv
-
-              return (
-                <tr
-                  key={id}
-                  onMouseEnter={() => setHoveredRow(id)}
-                  onMouseLeave={() => setHoveredRow(null)}
+            {filteredFeatures.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={6 + codebases.length}
                   style={{
-                    background: isHovered ? '#222222' : 'transparent',
-                    transition: 'background 0.12s ease',
-                    borderBottom: '1px solid #262626',
+                    padding: '4rem 1rem',
+                    textAlign: 'center',
+                    color: 'var(--color-fg-subtle)',
+                    fontSize: '0.875rem',
                   }}
                 >
-                  {/* Name + description */}
-                  <td style={{ padding: '0.7rem 1rem', maxWidth: '220px', verticalAlign: 'top' }}>
-                    <p style={{ margin: 0, fontWeight: 600, fontSize: '0.875rem', color: '#f0f0f0' }}>{f.name}</p>
-                    {f.description && (
-                      <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: '#8a8a8a', lineHeight: 1.4 }} title={f.description}>
-                        {truncate(f.description, 60)}
-                      </p>
-                    )}
-                  </td>
+                  <Search size={32} style={{ opacity: 0.3, marginBottom: '0.5rem' }} />
+                  <div>No features found matching the selected filters.</div>
+                </td>
+              </tr>
+            ) : (
+              filteredFeatures.map((f) => {
+                const fType = f.type || 'FEATURE'
+                const typeStyle = TYPE_STYLES[fType] || DEFAULT_TYPE_STYLE
+                const id = f._id.toString()
+                const isHovered = hoveredRow === id
+                const hasDb = !!f.dbChange?.trim()
+                const hasEnv = !!f.envChange?.trim()
+                const hasChanges = hasDb || hasEnv
 
-                  {/* Type */}
-                  <td style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        fontSize: '0.65rem',
-                        fontWeight: 700,
-                        padding: '0.15rem 0.55rem',
-                        borderRadius: '4px',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.04em',
-                        border: `1px solid ${typeStyle.border}`,
-                        color: typeStyle.fg,
-                        background: typeStyle.bg,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {fType}
-                    </span>
-                  </td>
-
-                  {/* Author */}
-                  <td style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      {f.authorId?.image ? (
-                        <img
-                          src={f.authorId.image}
-                          alt=""
-                          style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid #333' }}
-                          title={f.authorId.name}
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width: 22,
-                            height: 22,
-                            borderRadius: '50%',
-                            background: '#3a3a3a',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '0.6rem',
-                            fontWeight: 700,
-                            color: '#e0e0e0',
-                          }}
-                        >
-                          {getInitials(f.authorId?.name ?? 'U')}
-                        </div>
+                return (
+                  <tr
+                    key={id}
+                    onMouseEnter={() => setHoveredRow(id)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                    style={{
+                      background: isHovered ? '#222222' : 'transparent',
+                      transition: 'background 0.12s ease',
+                      borderBottom: '1px solid #262626',
+                    }}
+                  >
+                    {/* Name + description */}
+                    <td style={{ padding: '0.7rem 1rem', maxWidth: '220px', verticalAlign: 'top' }}>
+                      <p style={{ margin: 0, fontWeight: 600, fontSize: '0.875rem', color: '#f0f0f0' }}>{f.name}</p>
+                      {f.description && (
+                        <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: '#8a8a8a', lineHeight: 1.4 }} title={f.description}>
+                          {truncate(f.description, 60)}
+                        </p>
                       )}
-                      <span style={{ fontSize: '0.8125rem', color: '#c4c4c4' }}>{f.authorId?.name}</span>
-                    </div>
-                  </td>
+                    </td>
 
-                  {/* Dynamic codebase branch columns */}
-                  {codebases.map((cb) => {
-                    const cbBranch = f.codebaseBranches.find((b) => b.codebaseId.toString() === cb._id.toString())
-                    return (
-                      <td key={cb._id.toString()} style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
-                        {cbBranch?.branchName ? (
-                          <span
+                    {/* Type */}
+                    <td style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          padding: '0.15rem 0.55rem',
+                          borderRadius: '4px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                          border: `1px solid ${typeStyle.border}`,
+                          color: typeStyle.fg,
+                          background: typeStyle.bg,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {fType}
+                      </span>
+                    </td>
+
+                    {/* Author */}
+                    <td style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        {f.authorId?.image ? (
+                          <img
+                            src={f.authorId.image}
+                            alt=""
+                            style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid #333' }}
+                            title={f.authorId.name}
+                          />
+                        ) : (
+                          <div
                             style={{
-                              display: 'inline-flex',
+                              width: 22,
+                              height: 22,
+                              borderRadius: '50%',
+                              background: '#3a3a3a',
+                              display: 'flex',
                               alignItems: 'center',
-                              gap: '0.3rem',
-                              fontSize: '0.78rem',
-                              fontFamily: 'JetBrains Mono, monospace',
-                              color: '#8fd4a8',
-                              background: '#1b2e23',
-                              border: '1px solid #2b4a3a',
-                              borderRadius: '4px',
-                              padding: '0.15rem 0.45rem',
+                              justifyContent: 'center',
+                              fontSize: '0.6rem',
+                              fontWeight: 700,
+                              color: '#e0e0e0',
                             }}
                           >
-                            <GitBranch size={11} />
-                            {cbBranch.branchName}
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: '0.8125rem', color: '#5a5a5a' }}>— No Branch</span>
+                            {getInitials(f.authorId?.name ?? 'U')}
+                          </div>
                         )}
-                      </td>
-                    )
-                  })}
-
-                  {/* Changes */}
-                  <td style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
-                    {!hasChanges ? (
-                      <span style={{ color: '#5a5a5a', fontSize: '0.8125rem' }}>—</span>
-                    ) : (
-                      <button
-                        onClick={() => setSelectedFeatureForChanges(f)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          padding: '0.3rem 0.625rem',
-                          fontSize: '0.78rem',
-                          fontWeight: 600,
-                          borderRadius: '6px',
-                          border: '1px solid #3a3a3a',
-                          background: '#242424',
-                          color: '#cfcfcf',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                          lineHeight: 1.2,
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#2d2d2d'
-                          e.currentTarget.style.borderColor = '#4a4a4a'
-                          e.currentTarget.style.color = '#fff'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = '#242424'
-                          e.currentTarget.style.borderColor = '#3a3a3a'
-                          e.currentTarget.style.color = '#cfcfcf'
-                        }}
-                      >
-                        <span>View</span>
-                        <div style={{ display: 'flex', gap: '0.2rem' }}>
-                          {hasDb && (
-                            <span
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.2rem',
-                                fontSize: '0.625rem',
-                                fontWeight: 700,
-                                padding: '0.05rem 0.3rem',
-                                borderRadius: '3px',
-                                background: '#3a301f',
-                                color: '#f0cf9c',
-                                border: '1px solid #5c4a2b',
-                              }}
-                            >
-                              <Database size={9} /> DB
-                            </span>
-                          )}
-                          {hasEnv && (
-                            <span
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.2rem',
-                                fontSize: '0.625rem',
-                                fontWeight: 700,
-                                padding: '0.05rem 0.3rem',
-                                borderRadius: '3px',
-                                background: '#3a1f1f',
-                                color: '#f5a3a3',
-                                border: '1px solid #5c2b2b',
-                              }}
-                            >
-                              <Key size={9} /> ENV
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                    )}
-                  </td>
-
-                  {/* Deploy date */}
-                  <td style={{ padding: '0.7rem 1rem', fontSize: '0.8125rem', color: '#9a9a9a', whiteSpace: 'nowrap', verticalAlign: 'top' }}>
-                    {formatDate(f.deploymentDate)}
-                  </td>
-
-                  {/* Status */}
-                  <td style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
-                    <FeatureStatusBadge status={f.status} featureId={id} projectId={projectId} onUpdated={onStatusUpdated} />
-                  </td>
-
-                  {/* Delete */}
-                  {isOwner && (
-                    <td style={{ padding: '0.7rem 0.5rem', verticalAlign: 'top' }}>
-                      <button
-                        onClick={() => onDelete(id)}
-                        title="Delete feature"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: 28,
-                          height: 28,
-                          borderRadius: 6,
-                          border: 'none',
-                          background: 'transparent',
-                          cursor: 'pointer',
-                          color: isHovered ? '#666' : 'transparent',
-                          transition: 'color 0.15s, background 0.15s',
-                          opacity: isHovered ? 1 : 0,
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.color = '#f87171'
-                          e.currentTarget.style.background = '#3a1f1f'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.color = isHovered ? '#666' : 'transparent'
-                          e.currentTarget.style.background = 'transparent'
-                        }}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                        <span style={{ fontSize: '0.8125rem', color: '#c4c4c4' }}>{f.authorId?.name}</span>
+                      </div>
                     </td>
-                  )}
-                </tr>
-              )
-            })}
+
+                    {/* Dynamic codebase branch columns */}
+                    {codebases.map((cb) => {
+                      const cbBranch = f.codebaseBranches.find((b) => b.codebaseId.toString() === cb._id.toString())
+                      return (
+                        <td key={cb._id.toString()} style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
+                          {cbBranch?.branchName ? (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.3rem',
+                                fontSize: '0.78rem',
+                                fontFamily: 'JetBrains Mono, monospace',
+                                color: '#8fd4a8',
+                                background: '#1b2e23',
+                                border: '1px solid #2b4a3a',
+                                borderRadius: '4px',
+                                padding: '0.15rem 0.45rem',
+                              }}
+                            >
+                              <GitBranch size={11} />
+                              {cbBranch.branchName}
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.8125rem', color: '#5a5a5a' }}>— No Branch</span>
+                          )}
+                        </td>
+                      )
+                    })}
+
+                    {/* Changes */}
+                    <td style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
+                      {!hasChanges ? (
+                        <span style={{ color: '#5a5a5a', fontSize: '0.8125rem' }}>—</span>
+                      ) : (
+                        <button
+                          onClick={() => setSelectedFeatureForChanges(f)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            padding: '0.3rem 0.625rem',
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            borderRadius: '6px',
+                            border: '1px solid #3a3a3a',
+                            background: '#242424',
+                            color: '#cfcfcf',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                            lineHeight: 1.2,
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#2d2d2d'
+                            e.currentTarget.style.borderColor = '#4a4a4a'
+                            e.currentTarget.style.color = '#fff'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = '#242424'
+                            e.currentTarget.style.borderColor = '#3a3a3a'
+                            e.currentTarget.style.color = '#cfcfcf'
+                          }}
+                        >
+                          <span>View</span>
+                          <div style={{ display: 'flex', gap: '0.2rem' }}>
+                            {hasDb && (
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.2rem',
+                                  fontSize: '0.625rem',
+                                  fontWeight: 700,
+                                  padding: '0.05rem 0.3rem',
+                                  borderRadius: '3px',
+                                  background: '#3a301f',
+                                  color: '#f0cf9c',
+                                  border: '1px solid #5c4a2b',
+                                }}
+                              >
+                                <Database size={9} /> DB
+                              </span>
+                            )}
+                            {hasEnv && (
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.2rem',
+                                  fontSize: '0.625rem',
+                                  fontWeight: 700,
+                                  padding: '0.05rem 0.3rem',
+                                  borderRadius: '3px',
+                                  background: '#3a1f1f',
+                                  color: '#f5a3a3',
+                                  border: '1px solid #5c2b2b',
+                                }}
+                              >
+                                <Key size={9} /> ENV
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      )}
+                    </td>
+
+                    {/* Deploy date */}
+                    <td style={{ padding: '0.7rem 1rem', fontSize: '0.8125rem', color: '#9a9a9a', whiteSpace: 'nowrap', verticalAlign: 'top' }}>
+                      {formatDate(f.deploymentDate)}
+                    </td>
+
+                    {/* Status */}
+                    <td style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
+                      <FeatureStatusBadge status={f.status} featureId={id} projectId={projectId} onUpdated={onStatusUpdated} />
+                    </td>
+
+                  </tr>
+                )
+              })
+            )}
           </tbody>
         </table>
       </div>
@@ -431,6 +551,14 @@ export default function FeaturesTable({
           )}
         </div>
       </Modal>
+
+      <style>{`
+        .status-filter-btn:hover {
+          background-color: #222222 !important;
+          color: #ffffff !important;
+          border-color: #3e3e3e !important;
+        }
+      `}</style>
     </>
   )
 }

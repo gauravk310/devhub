@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import type { FeatureStatus } from '@/types'
 import Badge from '@/components/ui/Badge'
 import { ChevronDown } from 'lucide-react'
+import SwalConfirm from '@/components/ui/SwalConfirm'
 
 const ALL_STATUSES: FeatureStatus[] = ['PENDING', 'READY', 'TESTING', 'DEPLOYED', 'DISCARD']
 
@@ -28,19 +29,27 @@ export default function FeatureStatusBadge({ status, featureId, projectId, onUpd
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const handleChange = async (newStatus: FeatureStatus) => {
+  const [pendingStatus, setPendingStatus] = useState<FeatureStatus | null>(null)
+
+  const handleDropdownSelect = (newStatus: FeatureStatus) => {
     if (newStatus === status) { setOpen(false); return }
+    setPendingStatus(newStatus)
+    setOpen(false)
+  }
+
+  const handleConfirmChange = async () => {
+    if (!pendingStatus) return
     setLoading(true)
     try {
       const res = await fetch(`/api/projects/${projectId}/features/${featureId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: pendingStatus }),
       })
-      if (res.ok) onUpdated(featureId, newStatus)
+      if (res.ok) onUpdated(featureId, pendingStatus)
     } finally {
       setLoading(false)
-      setOpen(false)
+      setPendingStatus(null)
     }
   }
 
@@ -81,7 +90,7 @@ export default function FeatureStatusBadge({ status, featureId, projectId, onUpd
             <button
               key={s}
               type="button"
-              onClick={() => handleChange(s)}
+              onClick={() => handleDropdownSelect(s)}
               style={{
                 width: '100%', display: 'flex', alignItems: 'center',
                 padding: '0.375rem 0.75rem', border: 'none',
@@ -96,6 +105,16 @@ export default function FeatureStatusBadge({ status, featureId, projectId, onUpd
           ))}
         </div>
       )}
+
+      <SwalConfirm
+        isOpen={pendingStatus !== null}
+        onClose={() => setPendingStatus(null)}
+        onConfirm={handleConfirmChange}
+        title="Change Feature Status?"
+        message={`Are you sure you want to change the status of this feature from ${status} to ${pendingStatus || ''}?`}
+        confirmText="Change Status"
+        cancelText="Cancel"
+      />
     </div>
   )
 }
