@@ -27,12 +27,14 @@ export default function FeaturesPage({ params }: { params: Promise<{ projectId: 
 
   useEffect(() => { load() }, [projectId])
 
-  const handleStatusUpdated = (featureId: string, newStatus: FeatureStatus) => {
+  const handleStatusUpdated = (featureId: string, newStatus: FeatureStatus, deploymentDate?: Date | null) => {
     setFeatures((prev) =>
       prev.map((f) => {
         if (f._id.toString() === featureId) {
           const updated = { ...f, status: newStatus }
-          if (f.status === 'DEPLOYED' && newStatus !== 'DEPLOYED') {
+          if (newStatus === 'DEPLOYED') {
+            updated.deploymentDate = deploymentDate || new Date()
+          } else {
             updated.deploymentDate = null
           }
           return updated

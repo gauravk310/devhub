@@ -29,6 +29,7 @@ export async function GET(_: NextRequest, { params }: Params) {
 
   const features = await Feature.find({ projectId })
     .populate('authorId', 'name email image githubUsername')
+    .populate('collaborators', 'name email image githubUsername')
     .sort({ createdAt: -1 })
     .lean()
 
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (error) return Response.json({ error }, { status })
 
   const body = await req.json()
-  const { name, description, codebaseBranches, dbChange, envChange, type, deploymentDate } = body
+  const { name, description, codebaseBranches, dbChange, envChange, note, type, deploymentDate } = body
 
   if (!name?.trim()) return Response.json({ error: 'Feature name is required' }, { status: 400 })
 
@@ -60,11 +61,15 @@ export async function POST(req: NextRequest, { params }: Params) {
     codebaseBranches: codebaseBranches ?? [],
     dbChange: dbChange?.trim() ?? '',
     envChange: envChange?.trim() ?? '',
+    note: note?.trim() ?? '',
     status: 'PENDING',
     type: type || 'FEATURE',
-    deploymentDate: deploymentDate ? new Date(deploymentDate) : null,
+    deploymentDate: null,
   })
 
-  const populated = await feature.populate('authorId', 'name email image githubUsername')
+  const populated = await feature.populate([
+    { path: 'authorId', select: 'name email image githubUsername' },
+    { path: 'collaborators', select: 'name email image githubUsername' }
+  ])
   return Response.json({ data: populated }, { status: 201 })
 }

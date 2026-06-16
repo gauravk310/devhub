@@ -20,6 +20,7 @@ export default function CreateFeatureModal({ isOpen, onClose, onCreated, project
   const [branches, setBranches] = useState<Record<string, string | null>>({})
   const [dbChange, setDbChange] = useState('')
   const [envChange, setEnvChange] = useState('')
+  const [note, setNote] = useState('')
   const [type, setType] = useState<FeatureType>('FEATURE')
   const [deploymentDate, setDeploymentDate] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -27,7 +28,7 @@ export default function CreateFeatureModal({ isOpen, onClose, onCreated, project
 
   const reset = () => {
     setName(''); setDescription(''); setBranches({}); setType('FEATURE')
-    setDbChange(''); setEnvChange(''); setDeploymentDate(''); setError('')
+    setDbChange(''); setEnvChange(''); setNote(''); setDeploymentDate(''); setError('')
   }
   const handleClose = () => { reset(); onClose() }
 
@@ -43,7 +44,7 @@ export default function CreateFeatureModal({ isOpen, onClose, onCreated, project
       const res = await fetch(`/api/projects/${projectId}/features`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), description, codebaseBranches, dbChange, envChange, type, deploymentDate: deploymentDate || null }),
+        body: JSON.stringify({ name: name.trim(), description, codebaseBranches, dbChange, envChange, note, type, deploymentDate: deploymentDate || null }),
       })
       if (!res.ok) { const j = await res.json(); throw new Error(j.error || 'Failed') }
       onCreated()
@@ -101,6 +102,11 @@ export default function CreateFeatureModal({ isOpen, onClose, onCreated, project
           </div>
         </div>
 
+        <div>
+          <label className="gh-label">Changes Note</label>
+          <input className="gh-input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Additional instructions or notes..." />
+        </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
           <div>
             <label className="gh-label">Feature Type</label>
@@ -118,7 +124,7 @@ export default function CreateFeatureModal({ isOpen, onClose, onCreated, project
           </div>
           <div>
             <label className="gh-label">Deployment Date</label>
-            <input type="date" className="gh-input" value={deploymentDate} onChange={(e) => setDeploymentDate(e.target.value)} />
+            <input type="date" className="gh-input" value={deploymentDate} onChange={(e) => setDeploymentDate(e.target.value)} disabled />
           </div>
         </div>
 

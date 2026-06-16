@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { IFeaturePopulated, ICodebase, FeatureStatus } from '@/types'
 import FeatureStatusBadge from './FeatureStatusBadge'
 import { formatDate, truncate, getInitials } from '@/lib/utils'
-import { Plus, Database, Key, GitBranch, Search, User as UserIcon, Tag, Layers } from 'lucide-react'
+import { Plus, Database, Key, GitBranch, Search, User as UserIcon, Tag, Layers, FileText } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Modal from '@/components/ui/Modal'
 
@@ -14,7 +15,7 @@ interface Props {
   projectId: string
   ownerId: string
   onAddFeature: () => void
-  onStatusUpdated: (featureId: string, status: FeatureStatus) => void
+  onStatusUpdated: (featureId: string, status: FeatureStatus, deploymentDate?: Date | null) => void
 }
 
 const TYPE_STYLES: Record<string, { bg: string; fg: string; border: string }> = {
@@ -28,6 +29,7 @@ const DEFAULT_TYPE_STYLE = { bg: '#3a301f', fg: '#f0cf9c', border: '#5c4a2b' }
 export default function FeaturesTable({
   features, codebases, projectId, ownerId, onAddFeature, onStatusUpdated,
 }: Props) {
+  const router = useRouter()
   const { data: session } = useSession()
   const isOwner = session?.user?.id === ownerId
   const [selectedFeatureForChanges, setSelectedFeatureForChanges] = useState<IFeaturePopulated | null>(null)
@@ -287,17 +289,20 @@ export default function FeaturesTable({
                 const isHovered = hoveredRow === id
                 const hasDb = !!f.dbChange?.trim()
                 const hasEnv = !!f.envChange?.trim()
-                const hasChanges = hasDb || hasEnv
+                const hasNote = !!f.note?.trim()
+                const hasChanges = hasDb || hasEnv || hasNote
 
                 return (
                   <tr
                     key={id}
                     onMouseEnter={() => setHoveredRow(id)}
                     onMouseLeave={() => setHoveredRow(null)}
+                    onClick={() => router.push(`/projects/${projectId}/features/${id}`)}
                     style={{
                       background: isHovered ? '#222222' : 'transparent',
                       transition: 'background 0.12s ease',
                       borderBottom: '1px solid #262626',
+                      cursor: 'pointer',
                     }}
                   >
                     {/* Name + description */}
@@ -359,7 +364,22 @@ export default function FeaturesTable({
                             {getInitials(f.authorId?.name ?? 'U')}
                           </div>
                         )}
-                        <span style={{ fontSize: '0.8125rem', color: '#c4c4c4' }}>{f.authorId?.name}</span>
+                        <span style={{ fontSize: '0.8125rem', color: '#c4c4c4' }}>
+                          {f.authorId?.name}
+                          {f.collaborators && f.collaborators.length > 0 && (
+                            <span 
+                              style={{ 
+                                color: 'var(--color-fg-subtle)', 
+                                fontSize: '0.75rem', 
+                                marginLeft: '0.25rem',
+                                fontWeight: 500
+                              }}
+                              title={f.collaborators.map((c: any) => c.name).join(', ')}
+                            >
+                              +{f.collaborators.length}
+                            </span>
+                          )}
+                        </span>
                       </div>
                     </td>
 
@@ -396,10 +416,13 @@ export default function FeaturesTable({
                     {/* Changes */}
                     <td style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
                       {!hasChanges ? (
-                        <span style={{ color: '#5a5a5a', fontSize: '0.8125rem' }}>—</span>
+                        <span style={{ color: 'var(--color-fg-subtle)', fontSize: '0.8125rem' }}>No Change</span>
                       ) : (
                         <button
-                          onClick={() => setSelectedFeatureForChanges(f)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedFeatureForChanges(f)
+                          }}
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -427,44 +450,6 @@ export default function FeaturesTable({
                           }}
                         >
                           <span>View</span>
-                          <div style={{ display: 'flex', gap: '0.2rem' }}>
-                            {hasDb && (
-                              <span
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '0.2rem',
-                                  fontSize: '0.625rem',
-                                  fontWeight: 700,
-                                  padding: '0.05rem 0.3rem',
-                                  borderRadius: '3px',
-                                  background: '#3a301f',
-                                  color: '#f0cf9c',
-                                  border: '1px solid #5c4a2b',
-                                }}
-                              >
-                                <Database size={9} /> DB
-                              </span>
-                            )}
-                            {hasEnv && (
-                              <span
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '0.2rem',
-                                  fontSize: '0.625rem',
-                                  fontWeight: 700,
-                                  padding: '0.05rem 0.3rem',
-                                  borderRadius: '3px',
-                                  background: '#3a1f1f',
-                                  color: '#f5a3a3',
-                                  border: '1px solid #5c2b2b',
-                                }}
-                              >
-                                <Key size={9} /> ENV
-                              </span>
-                            )}
-                          </div>
                         </button>
                       )}
                     </td>
@@ -475,7 +460,7 @@ export default function FeaturesTable({
                     </td>
 
                     {/* Status */}
-                    <td style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
+                    <td onClick={(e) => e.stopPropagation()} style={{ padding: '0.7rem 1rem', verticalAlign: 'top' }}>
                       <FeatureStatusBadge status={f.status} featureId={id} projectId={projectId} onUpdated={onStatusUpdated} />
                     </td>
 
@@ -546,6 +531,34 @@ export default function FeaturesTable({
                 }}
               >
                 {selectedFeatureForChanges.envChange}
+              </pre>
+            </div>
+          )}
+
+          {selectedFeatureForChanges?.note?.trim() && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-accent-fg)' }}>
+                <FileText size={15} />
+                <span style={{ fontSize: '0.8125rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Note
+                </span>
+              </div>
+              <pre
+                style={{
+                  margin: 0,
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.8125rem',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  borderRadius: '6px',
+                  background: '#1e1e1e',
+                  border: '1px solid #333',
+                  color: '#e0e0e0',
+                  overflowX: 'auto',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-all',
+                }}
+              >
+                {selectedFeatureForChanges.note}
               </pre>
             </div>
           )}

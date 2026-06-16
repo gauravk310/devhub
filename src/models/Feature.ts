@@ -12,9 +12,11 @@ export interface IFeatureDocument extends Document {
   name: string
   description: string
   authorId: Types.ObjectId
+  collaborators: Types.ObjectId[]
   codebaseBranches: ICodebaseBranch[]
   dbChange: string
   envChange: string
+  note: string
   status: FeatureStatus
   type: FeatureType
   deploymentDate: Date | null
@@ -34,9 +36,11 @@ const FeatureSchema = new Schema<IFeatureDocument>(
     name: { type: String, required: true, trim: true },
     description: { type: String, default: '', trim: true },
     authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    collaborators: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     codebaseBranches: { type: [CodebaseBranchSchema], default: [] },
     dbChange: { type: String, default: '' },
     envChange: { type: String, default: '' },
+    note: { type: String, default: '' },
     status: {
       type: String,
       enum: ['PENDING', 'READY', 'TESTING', 'DEPLOYED', 'DISCARD'],
@@ -54,6 +58,10 @@ const FeatureSchema = new Schema<IFeatureDocument>(
 )
 
 FeatureSchema.index({ projectId: 1, createdAt: -1 })
+
+if (models.Feature && !models.Feature.schema.paths['collaborators']) {
+  delete (models as any).Feature
+}
 
 const Feature = models.Feature ?? model<IFeatureDocument>('Feature', FeatureSchema)
 export default Feature

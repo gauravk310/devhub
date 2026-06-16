@@ -5,6 +5,7 @@ import type { FeatureStatus } from '@/types'
 import Badge from '@/components/ui/Badge'
 import { ChevronDown } from 'lucide-react'
 import SwalConfirm from '@/components/ui/SwalConfirm'
+import Modal from '@/components/ui/Modal'
 
 const ALL_STATUSES: FeatureStatus[] = ['PENDING', 'READY', 'TESTING', 'DEPLOYED', 'DISCARD']
 
@@ -12,7 +13,7 @@ interface Props {
   status: FeatureStatus
   featureId: string
   projectId: string
-  onUpdated: (featureId: string, newStatus: FeatureStatus) => void
+  onUpdated: (featureId: string, newStatus: FeatureStatus, deploymentDate?: Date | null) => void
   readonly?: boolean
 }
 
@@ -30,9 +31,13 @@ export default function FeatureStatusBadge({ status, featureId, projectId, onUpd
   }, [])
 
   const [pendingStatus, setPendingStatus] = useState<FeatureStatus | null>(null)
+  const [deployDate, setDeployDate] = useState<string>(() => new Date().toISOString().split('T')[0])
 
   const handleDropdownSelect = (newStatus: FeatureStatus) => {
     if (newStatus === status) { setOpen(false); return }
+    if (newStatus === 'DEPLOYED') {
+      setDeployDate(new Date().toISOString().split('T')[0])
+    }
     setPendingStatus(newStatus)
     setOpen(false)
   }
@@ -41,12 +46,16 @@ export default function FeatureStatusBadge({ status, featureId, projectId, onUpd
     if (!pendingStatus) return
     setLoading(true)
     try {
+      const payload: { status: FeatureStatus; deploymentDate: Date | null } = {
+        status: pendingStatus,
+        deploymentDate: pendingStatus === 'DEPLOYED' ? (deployDate ? new Date(deployDate) : new Date()) : null
+      }
       const res = await fetch(`/api/projects/${projectId}/features/${featureId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: pendingStatus }),
+        body: JSON.stringify(payload),
       })
-      if (res.ok) onUpdated(featureId, pendingStatus)
+      if (res.ok) onUpdated(featureId, pendingStatus, payload.deploymentDate)
     } finally {
       setLoading(false)
       setPendingStatus(null)
@@ -107,7 +116,7 @@ export default function FeatureStatusBadge({ status, featureId, projectId, onUpd
       )}
 
       <SwalConfirm
-        isOpen={pendingStatus !== null}
+        isOpen={pendingStatus !== null && pendingStatus !== 'DEPLOYED'}
         onClose={() => setPendingStatus(null)}
         onConfirm={handleConfirmChange}
         title="Change Feature Status?"
@@ -115,6 +124,52 @@ export default function FeatureStatusBadge({ status, featureId, projectId, onUpd
         confirmText="Change Status"
         cancelText="Cancel"
       />
+
+      <Modal
+        isOpen={pendingStatus === 'DEPLOYED'}
+        onClose={() => setPendingStatus(null)}
+        title="Set Deployment Date"
+        maxWidth="400px"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div>
+            <label className="gh-label" style={{ marginBottom: '0.375rem', display: 'block', fontSize: '0.875rem', fontWeight: 500 }}>
+              Deployment Date <span style={{ color: 'var(--color-danger-fg)' }}>*</span>
+            </label>
+            <input
+              type="date"
+              className="gh-input"
+              value={deployDate}
+              onChange={(e) => setDeployDate(e.target.value)}
+              required
+            />
+            {!deployDate && (
+              <span style={{ color: 'var(--color-danger-fg)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                Deployment date is required.
+              </span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+            <button
+              type="button"
+              className="gh-btn-secondary"
+              onClick={() => setPendingStatus(null)}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="gh-btn-primary"
+              onClick={handleConfirmChange}
+              disabled={loading || !deployDate}
+            >
+              {loading ? 'Updating...' : 'Confirm'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

@@ -97,9 +97,11 @@ export interface IFeature {
   name: string
   description: string
   authorId: ObjectId
+  collaborators: ObjectId[]
   codebaseBranches: ICodebaseBranch[]
   dbChange: string
   envChange: string
+  note: string
   status: FeatureStatus
   type?: FeatureType
   deploymentDate: Date | null
@@ -107,8 +109,9 @@ export interface IFeature {
   updatedAt: Date
 }
 
-export interface IFeaturePopulated extends Omit<IFeature, 'authorId'> {
+export interface IFeaturePopulated extends Omit<IFeature, 'authorId' | 'collaborators'> {
   authorId: PublicUser
+  collaborators: PublicUser[]
 }
 
 // ─── Notification ─────────────────────────────────────────────
