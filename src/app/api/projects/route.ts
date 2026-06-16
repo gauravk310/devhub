@@ -16,6 +16,8 @@ export async function GET() {
     .sort({ updatedAt: -1 })
     .lean()
 
+
+
   return Response.json({ data: projects })
 }
 
@@ -35,9 +37,25 @@ export async function POST(req: NextRequest) {
   }
 
   await dbConnect()
+
+  let uniqueCode = ''
+  let isUnique = false
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  while (!isUnique) {
+    uniqueCode = ''
+    for (let i = 0; i < 8; i++) {
+      uniqueCode += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    const existing = await Project.findOne({ projectId: uniqueCode })
+    if (!existing) {
+      isUnique = true
+    }
+  }
+
   const project = await Project.create({
     name: name.trim(),
     domain: domain?.trim() ?? '',
+    projectId: uniqueCode,
     ownerId: session.user.id,
     codebases,
     hasQA: hasQA ?? false,

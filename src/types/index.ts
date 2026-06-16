@@ -65,6 +65,7 @@ export interface IProject {
   _id: ObjectId
   name: string
   domain: string
+  projectId?: string
   ownerId: ObjectId
   codebases: ICodebase[]
   hasQA: boolean
@@ -116,7 +117,7 @@ export interface IFeaturePopulated extends Omit<IFeature, 'authorId' | 'collabor
 
 // ─── Notification ─────────────────────────────────────────────
 
-export type NotificationType = 'PROJECT_INVITE' | 'FEATURE_UPDATE' | 'GENERAL'
+export type NotificationType = 'PROJECT_INVITE' | 'FEATURE_UPDATE' | 'GENERAL' | 'PROJECT_REQUEST'
 export type NotificationStatus = 'UNREAD' | 'READ' | 'ACCEPTED' | 'DECLINED'
 
 export interface INotification {

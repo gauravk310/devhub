@@ -18,7 +18,7 @@ const NotificationSchema = new Schema<INotificationDocument>(
     senderId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     type: {
       type: String,
-      enum: ['PROJECT_INVITE', 'FEATURE_UPDATE', 'GENERAL'],
+      enum: ['PROJECT_INVITE', 'FEATURE_UPDATE', 'GENERAL', 'PROJECT_REQUEST'],
       required: true,
     },
     projectId: { type: Schema.Types.ObjectId, ref: 'Project', default: null },

@@ -25,6 +25,7 @@ export default function TeamPage({ params }: { params: Promise<{ projectId: stri
   const [members, setMembers] = useState<TeamMember[]>([])
   const [invites, setInvites] = useState<PendingInvite[]>([])
   const [ownerId, setOwnerId] = useState('')
+  const [projectCode, setProjectCode] = useState('')
   const [loading, setLoading] = useState(true)
   const [showInvite, setShowInvite] = useState(false)
 
@@ -39,6 +40,7 @@ export default function TeamPage({ params }: { params: Promise<{ projectId: stri
     const json = await res.json()
     setMembers(json.data ?? [])
     setOwnerId(json.ownerId ?? '')
+    setProjectCode(json.projectCode ?? '')
     setInvites(json.invites ?? [])
     setLoading(false)
   }
@@ -112,6 +114,42 @@ export default function TeamPage({ params }: { params: Promise<{ projectId: stri
           </button>
         )}
       </div>
+
+      {projectCode && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          padding: '0.75rem 1rem',
+          backgroundColor: 'var(--color-canvas-subtle)',
+          border: '1px solid var(--color-border-default)',
+          borderRadius: '8px',
+          marginBottom: '1.5rem'
+        }}>
+          <span style={{ fontSize: '0.875rem', color: 'var(--color-fg-muted)' }}>
+            Share Project ID for others to join:
+          </span>
+          <code style={{
+            fontSize: '0.9375rem',
+            fontWeight: 700,
+            color: 'var(--color-accent-fg)',
+            background: 'var(--color-canvas-default)',
+            padding: '0.25rem 0.5rem',
+            borderRadius: '4px',
+            border: '1px solid var(--color-border-muted)'
+          }}>{projectCode}</code>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(projectCode)
+              setToast({ message: 'Project ID copied to clipboard!', type: 'success' })
+            }}
+            className="gh-btn-secondary"
+            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: 'auto' }}
+          >
+            Copy
+          </button>
+        </div>
+      )}
 
       <TeamTable members={members} ownerId={ownerId} onRemove={handleRemoveClick} />
 

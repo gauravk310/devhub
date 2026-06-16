@@ -29,7 +29,8 @@ import {
   GitBranch,
   Bell,
   Network,
-  Layers
+  Layers,
+  UserPlus
 } from 'lucide-react'
 import { useSidebar } from '@/components/layout/SidebarContext'
 
@@ -51,6 +52,7 @@ export default function Sidebar() {
   const globalNavItems = [
     { href: '/projects', label: 'Projects', icon: FolderKanban },
     { href: '/notifications', label: 'Notifications', icon: Bell },
+    { href: '/join-project', label: 'Join Project', icon: UserPlus },
   ]
 
   // Project-specific sidebar items

@@ -2,12 +2,13 @@
 
 import { formatDate, timeAgo } from '@/lib/utils'
 import type { INotificationPopulated } from '@/types'
-import { Mail, GitPullRequest, Info, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { Mail, GitPullRequest, Info, CheckCircle, XCircle, Clock, UserPlus } from 'lucide-react'
 
 const typeIcon = {
   PROJECT_INVITE: GitPullRequest,
   FEATURE_UPDATE: Info,
   GENERAL: Mail,
+  PROJECT_REQUEST: UserPlus,
 }
 
 const statusStyle: Record<string, { color: string; label: string }> = {

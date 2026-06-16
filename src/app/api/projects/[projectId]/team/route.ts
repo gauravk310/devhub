@@ -48,7 +48,7 @@ export async function GET(_: NextRequest, { params }: Params) {
     createdAt: inv.createdAt,
   }))
 
-  return Response.json({ data: members, ownerId: project.ownerId.toString(), invites: formattedInvites })
+  return Response.json({ data: members, ownerId: project.ownerId.toString(), projectCode: project.projectId, invites: formattedInvites })
 }
 
 // DELETE /api/projects/:id/team/:uid handled in separate route — 

@@ -46,6 +46,20 @@ export async function PUT(req: NextRequest, { params }: Params) {
     }
   }
 
+  // Handle project join request acceptance
+  if (status === 'ACCEPTED' && notification.type === 'PROJECT_REQUEST' && notification.projectId) {
+    const project = await Project.findById(notification.projectId)
+    if (project) {
+      const alreadyMember = project.members
+        .map((m: { toString(): string }) => m.toString())
+        .includes(notification.senderId.toString())
+      if (!alreadyMember) {
+        project.members.push(notification.senderId as unknown as never)
+        await project.save()
+      }
+    }
+  }
+
   await notification.save()
   return Response.json({ data: notification })
 }

@@ -18,7 +18,8 @@ export default function NotificationModal({ notification, onClose, onUpdate }: P
   if (!notification) return null
 
   const canAct =
-    notification.type === 'PROJECT_INVITE' && notification.status === 'UNREAD'
+    (notification.type === 'PROJECT_INVITE' || notification.type === 'PROJECT_REQUEST') &&
+    (notification.status === 'UNREAD' || notification.status === 'READ')
 
   const handle = async (status: 'ACCEPTED' | 'DECLINED') => {
     setLoading(status)

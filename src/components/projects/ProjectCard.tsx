@@ -1,8 +1,9 @@
 'use client'
 
 import type { IProjectWithMembers } from '@/types'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { GitBranch, Globe, Users, Calendar, Crown } from 'lucide-react'
+import { GitBranch, Globe, Users, Calendar, Crown, Copy, Check } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { useSession } from 'next-auth/react'
 
@@ -13,6 +14,15 @@ interface Props {
 export default function ProjectCard({ project }: Props) {
   const router = useRouter()
   const { data: session } = useSession()
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = () => {
+    if (project.projectId) {
+      navigator.clipboard.writeText(project.projectId)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
 
   const isOwner =
     typeof project.ownerId === 'object'
@@ -37,6 +47,45 @@ export default function ProjectCard({ project }: Props) {
           </span>
         )}
       </div>
+
+      {/* Project ID */}
+      {project.projectId && typeof project.projectId === 'string' && project.projectId.trim() !== '' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginTop: '-0.375rem' }} onClick={(e) => e.stopPropagation()}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--color-fg-subtle)' }}>ID:</span>
+          <code style={{ fontSize: '0.75rem', color: 'var(--color-accent-fg)', fontWeight: 600, background: 'var(--color-canvas-inset)', padding: '0.1rem 0.35rem', borderRadius: '4px', border: '1px solid var(--color-border-muted)' }}>
+            {project.projectId}
+          </code>
+          <button
+            onClick={handleCopy}
+            title="Copy Project ID"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: copied ? 'var(--color-success-fg)' : 'var(--color-fg-muted)',
+              display: 'flex',
+              alignItems: 'center',
+              padding: '2px',
+              borderRadius: '4px',
+              transition: 'color 0.15s, background 0.15s'
+            }}
+            onMouseEnter={(e) => {
+              if (!copied) {
+                e.currentTarget.style.color = 'var(--color-fg-default)'
+                e.currentTarget.style.background = 'var(--color-border-muted)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!copied) {
+                e.currentTarget.style.color = 'var(--color-fg-muted)'
+                e.currentTarget.style.background = 'transparent'
+              }
+            }}
+          >
+            {copied ? <Check size={12} /> : <Copy size={12} />}
+          </button>
+        </div>
+      )}
 
       {/* Domain */}
       {project.domain && (

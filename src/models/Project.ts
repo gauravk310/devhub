@@ -15,6 +15,7 @@ interface IQABranch {
 export interface IProjectDocument extends Document {
   name: string
   domain: string
+  projectId?: string
   ownerId: Types.ObjectId
   codebases: ICodebase[]
   hasQA: boolean
@@ -39,6 +40,7 @@ const ProjectSchema = new Schema<IProjectDocument>(
   {
     name: { type: String, required: true, trim: true },
     domain: { type: String, default: '', trim: true },
+    projectId: { type: String, unique: true, index: true, sparse: true },
     ownerId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     codebases: { type: [CodebaseSchema], default: [] },
     hasQA: { type: Boolean, default: false },
