@@ -308,11 +308,6 @@ export default function FeaturesTable({
                     {/* Name + description */}
                     <td style={{ padding: '0.7rem 1rem', maxWidth: '220px', verticalAlign: 'top' }}>
                       <p style={{ margin: 0, fontWeight: 600, fontSize: '0.875rem', color: '#f0f0f0' }}>{f.name}</p>
-                      {f.description && (
-                        <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: '#8a8a8a', lineHeight: 1.4 }} title={f.description}>
-                          {truncate(f.description, 60)}
-                        </p>
-                      )}
                     </td>
 
                     {/* Type */}
