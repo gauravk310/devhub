@@ -47,7 +47,12 @@ export default function BranchSelector({ codebaseName, repoFullName, value, onCh
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      <label className="gh-label">{codebaseName} Branch</label>
+      <label className="gh-label" style={{ fontWeight: 600 }}>
+        {codebaseName}{' '}
+        <span style={{ color: 'var(--color-fg-muted)', fontWeight: 400 }}>
+          - {repoFullName} {loading ? 'loading branches...' : `(${branches.length} branches)`}
+        </span>
+      </label>
       
       <button
         type="button"

@@ -47,18 +47,28 @@ export async function getRepoBranches(
   repo: string
 ): Promise<GitHubBranch[]> {
   const octokit = createOctokit(accessToken)
+  const branches: GitHubBranch[] = []
 
-  const { data } = await octokit.repos.listBranches({
-    owner,
-    repo,
-    per_page: 100,
-  })
+  try {
+    for await (const response of octokit.paginate.iterator(octokit.repos.listBranches, {
+      owner,
+      repo,
+      per_page: 100,
+    })) {
+      for (const branch of response.data) {
+        branches.push({
+          name: branch.name,
+          commit: { sha: branch.commit.sha },
+          protected: branch.protected,
+        })
+      }
+      if (branches.length >= 1000) break
+    }
+  } catch (error) {
+    console.error('Error fetching branches:', error)
+  }
 
-  return data.map((branch) => ({
-    name: branch.name,
-    commit: { sha: branch.commit.sha },
-    protected: branch.protected,
-  }))
+  return branches
 }
 
 // ─── Repo Analytics ───────────────────────────────────────────
