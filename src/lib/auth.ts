@@ -12,6 +12,7 @@ export const authConfig: NextAuthConfig = {
       authorization: { params: { scope: 'read:user user:email repo' } },
     }),
   ],
+  trustHost: true,
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   session: {
     strategy: 'jwt',
