@@ -100,7 +100,7 @@ export default function Footer() {
         >
           {/* Instagram Link */}
           <a
-            href="https://instagram.com"
+            href="https://instagram.com/seven.learn"
             target="_blank"
             rel="noreferrer"
             style={{
@@ -122,7 +122,7 @@ export default function Footer() {
 
           {/* GitHub Link */}
           <a
-            href="https://github.com/gauravk310/devhub"
+            href="https://github.com/gauravk310"
             target="_blank"
             rel="noreferrer"
             style={{
