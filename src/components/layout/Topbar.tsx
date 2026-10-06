@@ -4,8 +4,12 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import UserDropdown from '@/components/layout/UserDropdown'
-import { useSidebar } from '@/components/layout/SidebarContext'
-import { Mail, ChevronDown } from 'lucide-react'
+import { 
+  FolderKanban, 
+  Bell, 
+  UserPlus, 
+  Mail 
+} from 'lucide-react'
 
 interface TopbarProps {
   title?: string
@@ -28,33 +32,53 @@ const GithubIcon = () => (
 
 export default function Topbar({ title, breadcrumb }: TopbarProps) {
   const pathname = usePathname()
-  const { isCollapsed } = useSidebar()
-  const sidebarWidth = isCollapsed ? '64px' : '240px'
 
   const segments = pathname.split('/').filter(Boolean)
   const isInsideProject = segments[0] === 'projects' && segments[1] && segments[1] !== 'new'
   const projectId = isInsideProject ? segments[1] : null
-  const isInsideDatabase = isInsideProject && segments[2] === 'database' && segments[3] && segments[3] !== 'new'
-  const databaseId = isInsideDatabase ? segments[3] : null
 
   const [project, setProject] = useState<{ name: string } | null>(null)
-  const [database, setDatabase] = useState<{ name: string } | null>(null)
+  const [unreadCount, setUnreadCount] = useState<number>(0)
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await fetch('/api/notifications?unread=true')
+      if (res.ok) {
+        const json = await res.json()
+        setUnreadCount(json.data?.length ?? 0)
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  useEffect(() => {
+    fetchUnreadCount()
+    const interval = setInterval(fetchUnreadCount, 30_000)
+    const onUpdate = () => fetchUnreadCount()
+    window.addEventListener('notifications-updated', onUpdate)
+    window.addEventListener('focus', onUpdate)
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('notifications-updated', onUpdate)
+      window.removeEventListener('focus', onUpdate)
+    }
+  }, [pathname])
 
   useEffect(() => {
     if (projectId) {
       fetch(`/api/projects/${projectId}`)
         .then((r) => r.json())
         .then((j) => setProject(j.data))
+        .catch(() => {})
+    } else {
+      setProject(null)
     }
   }, [projectId])
 
-  useEffect(() => {
-    if (projectId && databaseId) {
-      fetch(`/api/projects/${projectId}/databases/${databaseId}`)
-        .then((r) => r.json())
-        .then((j) => setDatabase(j.data))
-    }
-  }, [projectId, databaseId])
+  const isProjectsActive = pathname === '/projects' || pathname.startsWith('/projects')
+  const isNotificationsActive = pathname === '/notifications' || pathname.startsWith('/notifications')
+  const isJoinProjectActive = pathname === '/join-project' || pathname.startsWith('/join-project')
 
   return (
     <header
@@ -62,208 +86,191 @@ export default function Topbar({ title, breadcrumb }: TopbarProps) {
         position: 'fixed',
         top: 0,
         right: 0,
-        left: sidebarWidth,
+        left: 0,
         height: '56px',
-        zIndex: 15,
+        zIndex: 50,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 1.5rem',
         gap: '1rem',
-        backgroundColor: '#0d1117',
-        borderBottom: '1px solid #1f2023',
-        transition: 'left 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        backgroundColor: '#161616',
+        borderBottom: '1px solid #27272a',
       }}
     >
-      {/* Left: Dynamic Project Breadcrumbs or generic Title */}
-      {isInsideProject ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', minWidth: 0, flexWrap: 'wrap' }}>
-          {/* Home Link */}
+      {/* Left: Brand + Navigation Items */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+        {/* DevHub Logo & Brand */}
+        <Link
+          href="/projects"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.625rem',
+            textDecoration: 'none',
+            flexShrink: 0,
+          }}
+          className="topbar-brand-link"
+        >
+          <img
+            src="/logo.png"
+            alt="DevHub Logo"
+            style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '6px',
+              objectFit: 'contain',
+            }}
+          />
+          <span
+            style={{
+              fontWeight: 800,
+              fontSize: '1rem',
+              color: '#ffffff',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            DevHub
+          </span>
+        </Link>
+
+        {/* Subtle Separator */}
+        <div
+          style={{
+            width: '1px',
+            height: '18px',
+            backgroundColor: '#27272a',
+            margin: '0 0.25rem',
+            flexShrink: 0,
+          }}
+        />
+
+        {/* Navigation Menu (moved from Sidebar) */}
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexShrink: 0 }}>
+          {/* Projects */}
           <Link
             href="/projects"
             style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.375rem 0.75rem',
+              borderRadius: '6px',
               fontSize: '0.875rem',
-              color: '#8b949e',
               fontWeight: 500,
               textDecoration: 'none',
+              color: isProjectsActive ? '#ffffff' : '#8b949e',
+              backgroundColor: isProjectsActive ? '#27272a' : 'transparent',
+              transition: 'all 0.15s ease',
             }}
-            className="topbar-breadcrumb-link"
+            className="topbar-nav-link"
           >
-            Home
+            <FolderKanban
+              size={16}
+              color={isProjectsActive ? '#22c55e' : 'currentColor'}
+              style={{ flexShrink: 0 }}
+            />
+            <span>Projects</span>
           </Link>
 
-          <span style={{ color: '#30363d', fontSize: '0.875rem' }}>/</span>
-
-          {/* Projects Link */}
+          {/* Notifications */}
           <Link
-            href="/projects"
+            href="/notifications"
             style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.375rem 0.75rem',
+              borderRadius: '6px',
               fontSize: '0.875rem',
-              color: '#8b949e',
               fontWeight: 500,
               textDecoration: 'none',
+              color: isNotificationsActive ? '#ffffff' : '#8b949e',
+              backgroundColor: isNotificationsActive ? '#27272a' : 'transparent',
+              transition: 'all 0.15s ease',
             }}
-            className="topbar-breadcrumb-link"
+            className="topbar-nav-link"
           >
-            projects
-          </Link>
-
-          <span style={{ color: '#30363d', fontSize: '0.875rem' }}>/</span>
-
-          {/* Project Link */}
-          <Link
-            href={`/projects/${projectId}/dashboard`}
-            style={{
-              fontSize: '0.875rem',
-              color: isInsideDatabase ? '#8b949e' : '#ffffff',
-              fontWeight: isInsideDatabase ? 500 : 600,
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-            className="topbar-breadcrumb-link"
-          >
-            {project?.name ?? 'Loading...'}
-          </Link>
-
-          {isInsideDatabase ? (
-            <>
-              <span style={{ color: '#30363d', fontSize: '0.875rem' }}>/</span>
-              
-              {/* Database Section Link */}
-              <Link
-                href={`/projects/${projectId}/database`}
+            <Bell
+              size={16}
+              color={isNotificationsActive ? '#22c55e' : 'currentColor'}
+              style={{ flexShrink: 0 }}
+            />
+            <span>Notifications</span>
+            {unreadCount > 0 && (
+              <span
                 style={{
-                  fontSize: '0.875rem',
-                  color: '#8b949e',
-                  fontWeight: 500,
-                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: '18px',
+                  height: '18px',
+                  padding: '0 5px',
+                  borderRadius: '9999px',
+                  fontSize: '0.6875rem',
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  backgroundColor: '#da3633',
+                  color: '#ffffff',
+                  marginLeft: '2px',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.4)',
                 }}
-                className="topbar-breadcrumb-link"
               >
-                Database
-              </Link>
-
-              <span style={{ color: '#30363d', fontSize: '0.875rem' }}>/</span>
-
-              {/* Database Link */}
-              <Link
-                href={`/projects/${projectId}/database/${databaseId}`}
-                style={{
-                  fontSize: '0.875rem',
-                  color: segments[4] ? '#8b949e' : '#ffffff',
-                  fontWeight: segments[4] ? 500 : 600,
-                  textDecoration: 'none',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-                className="topbar-breadcrumb-link"
-              >
-                {database?.name ?? 'Loading...'}
-              </Link>
-
-              {segments[4] && (
-                <>
-                  <span style={{ color: '#30363d', fontSize: '0.875rem' }}>/</span>
-                  <span
-                    style={{
-                      fontSize: '0.875rem',
-                      color: '#ffffff',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {segments[4] === 'collections' ? 'Collections' :
-                     segments[4] === 'storage' ? 'Storage' :
-                     segments[4] === 'queries' ? 'Queries' :
-                     segments[4] === 'indexes' ? 'Indexes' :
-                     segments[4] === 'replication' ? 'Replication' :
-                     segments[4] === 'settings' ? 'Settings' :
-                     segments[4].charAt(0).toUpperCase() + segments[4].slice(1)}
-                  </span>
-                </>
-              )}
-            </>
-          ) : (
-            segments[2] && segments[2] !== 'dashboard' && (
-              <>
-                <span style={{ color: '#30363d', fontSize: '0.875rem' }}>/</span>
-                <span
-                  style={{
-                    fontSize: '0.875rem',
-                    color: '#ffffff',
-                    fontWeight: 600,
-                  }}
-                >
-                  {segments[2] === 'features' ? 'Features' :
-                   segments[2] === 'team' ? 'Team' :
-                   segments[2] === 'merges' ? 'Deployment History' :
-                   segments[2] === 'codebases' ? 'Contributions' :
-                   segments[2] === 'database' ? 'Database' :
-                   segments[2] === 'storage' ? 'Storage' :
-                   segments[2] === 'sql' ? 'SQL Editor' :
-                   segments[2] === 'functions' ? 'Functions' :
-                   segments[2] === 'realtime' ? 'Realtime' :
-                   segments[2] === 'gateway' ? 'Model Gateway' :
-                   segments[2] === 'sites' ? 'Sites' :
-                   segments[2] === 'compute' ? 'Compute' :
-                   segments[2] === 'payments' ? 'Payments' :
-                   segments[2] === 'logs' ? 'Logs' :
-                   segments[2] === 'install' ? 'Install' :
-                   segments[2] === 'doc' ? 'Doc' :
-                   segments[2] === 'settings' ? 'Settings' :
-                   segments[2].charAt(0).toUpperCase() + segments[2].slice(1)}
-                </span>
-              </>
-            )
-          )}
-        </div>
-      ) : (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', minWidth: 0 }}>
-          {breadcrumb ? (
-            breadcrumb.map((crumb, i) => (
-              <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {i > 0 && <span style={{ color: '#8b949e', fontSize: '0.875rem' }}>/</span>}
-                {crumb.href ? (
-                  <Link
-                    href={crumb.href}
-                    style={{ fontSize: '0.875rem', color: '#58a6ff', fontWeight: 500 }}
-                  >
-                    {crumb.label}
-                  </Link>
-                ) : (
-                  <span style={{ fontSize: '0.875rem', color: '#ffffff', fontWeight: 600 }}>
-                    {crumb.label}
-                  </span>
-                )}
+                {unreadCount > 99 ? '99+' : unreadCount}
               </span>
-            ))
-          ) : (
-            segments[0] === 'projects' && segments.length === 1 ? (
-              <span style={{ fontSize: '0.875rem', color: '#ffffff', fontWeight: 600 }}>Home</span>
-            ) : (
-              <>
-                <Link
-                  href="/projects"
-                  style={{ fontSize: '0.875rem', color: '#8b949e', fontWeight: 500, textDecoration: 'none' }}
-                  className="topbar-breadcrumb-link"
-                >
-                  Home
-                </Link>
-                {segments[0] && (
-                  <>
-                    <span style={{ color: '#30363d', fontSize: '0.875rem' }}>/</span>
-                    <span style={{ fontSize: '0.875rem', color: '#ffffff', fontWeight: 600, textTransform: 'capitalize' }}>
-                      {segments[0] === 'projects' && segments[1] === 'new' ? 'New Project' : segments[0]}
-                    </span>
-                  </>
-                )}
-              </>
-            )
-          )}
-        </div>
-      )}
+            )}
+          </Link>
+
+          {/* Join Project */}
+          <Link
+            href="/join-project"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.375rem 0.75rem',
+              borderRadius: '6px',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              textDecoration: 'none',
+              color: isJoinProjectActive ? '#ffffff' : '#8b949e',
+              backgroundColor: isJoinProjectActive ? '#27272a' : 'transparent',
+              transition: 'all 0.15s ease',
+            }}
+            className="topbar-nav-link"
+          >
+            <UserPlus
+              size={16}
+              color={isJoinProjectActive ? '#22c55e' : 'currentColor'}
+              style={{ flexShrink: 0 }}
+            />
+            <span>Join Project</span>
+          </Link>
+        </nav>
+
+        {/* Project Breadcrumb if inside project */}
+        {isInsideProject && project && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.25rem' }}>
+            <span style={{ color: '#30363d', fontSize: '0.875rem' }}>/</span>
+            <Link
+              href={`/projects/${projectId}/dashboard`}
+              style={{
+                fontSize: '0.875rem',
+                color: '#ffffff',
+                fontWeight: 600,
+                textDecoration: 'none',
+                maxWidth: '200px',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+              className="topbar-project-link"
+            >
+              {project.name}
+            </Link>
+          </div>
+        )}
+      </div>
 
       {/* Right: Instagram, GitHub Stars, Contact Us, User Avatar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexShrink: 0 }}>
@@ -324,12 +331,18 @@ export default function Topbar({ title, breadcrumb }: TopbarProps) {
       </div>
 
       <style>{`
-        .topbar-social-link:hover, .topbar-social-link:hover span {
+        .topbar-brand-link:hover {
+          opacity: 0.85;
+        }
+        .topbar-nav-link:hover {
+          background-color: #212124 !important;
           color: #ffffff !important;
         }
-        .topbar-breadcrumb-link:hover {
+        .topbar-project-link:hover {
+          color: #58a6ff !important;
+        }
+        .topbar-social-link:hover, .topbar-social-link:hover span {
           color: #ffffff !important;
-          text-decoration: underline !important;
         }
       `}</style>
     </header>

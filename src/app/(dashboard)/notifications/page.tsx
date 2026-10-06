@@ -30,6 +30,9 @@ export default function NotificationsPage() {
     setNotifications((prev) =>
       prev.map((n) => (n._id.toString() === id ? { ...n, status: status as NotificationStatus } : n))
     )
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('notifications-updated'))
+    }
   }
 
   const handleSelect = async (n: INotificationPopulated) => {

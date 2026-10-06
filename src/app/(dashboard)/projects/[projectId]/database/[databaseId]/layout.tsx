@@ -1,9 +1,22 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, use } from 'react'
-import { useParams } from 'next/navigation'
+import React, { createContext, useContext, useState, useEffect } from 'react'
+import { useParams, usePathname } from 'next/navigation'
+import Link from 'next/link'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import { Database as DbIcon, ShieldCheck, ServerCrash, Play } from 'lucide-react'
+import { 
+  Database as DbIcon, 
+  ShieldCheck, 
+  ServerCrash, 
+  Play,
+  Home,
+  Layers,
+  HardDrive,
+  SquareTerminal,
+  Code2,
+  Network,
+  Settings
+} from 'lucide-react'
 import { timeAgo } from '@/lib/utils'
 
 interface DatabaseDetails {
@@ -33,8 +46,27 @@ export const useDatabase = () => useContext(DatabaseContext)
 
 export default function ProjectDatabaseLayout({ children }: { children: React.ReactNode }) {
   const { projectId, databaseId } = useParams() as { projectId: string; databaseId: string }
+  const pathname = usePathname()
   const [database, setDatabase] = useState<DatabaseDetails | null>(null)
   const [loading, setLoading] = useState(true)
+
+  const databaseNavItems = [
+    { href: `/projects/${projectId}/database/${databaseId}`, label: 'Overview', icon: Home },
+    { href: `/projects/${projectId}/database/${databaseId}/collections`, label: 'Collections', icon: Layers },
+    { href: `/projects/${projectId}/database/${databaseId}/storage`, label: 'Storage Analytics', icon: HardDrive },
+    { href: `/projects/${projectId}/database/${databaseId}/queries`, label: 'Query Analytics', icon: SquareTerminal },
+    { href: `/projects/${projectId}/database/${databaseId}/indexes`, label: 'Index Analytics', icon: Code2 },
+    { href: `/projects/${projectId}/database/${databaseId}/replication`, label: 'Replication', icon: Network },
+    { href: `/projects/${projectId}/database/${databaseId}/settings`, label: 'Settings', icon: Settings },
+  ]
+
+  const isTabActive = (href: string) => {
+    if (href === `/projects/${projectId}/database/${databaseId}`) {
+      return pathname === href
+    }
+    return pathname === href || pathname.startsWith(href + '/')
+  }
+
   const fetchDatabaseDetails = async () => {
     try {
       const res = await fetch(`/api/projects/${projectId}/databases/${databaseId}`)
@@ -96,16 +128,16 @@ export default function ProjectDatabaseLayout({ children }: { children: React.Re
 
   return (
     <DatabaseContext.Provider value={{ database, loading, refresh: fetchDatabaseDetails }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         
         {/* Workspace Sub-header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--color-border-muted)', paddingBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--color-border-muted)', paddingBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ width: '42px', height: '42px', borderRadius: '8px', border: '1px solid var(--color-border-default)', background: 'var(--color-canvas-inset)', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center' }}>
               <DbIcon size={22} color="var(--color-success-fg)" />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ display: 'center', alignItems: 'center', gap: '0.75rem' }}>
                 <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', margin: 0, letterSpacing: '-0.02em' }}>
                   {database.name}
                 </h1>
@@ -118,8 +150,47 @@ export default function ProjectDatabaseLayout({ children }: { children: React.Re
               </p>
             </div>
           </div>
+        </div>
 
-
+        {/* Database Navigation Tabs */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.375rem',
+            borderBottom: '1px solid var(--color-border-muted)',
+            overflowX: 'auto',
+            paddingBottom: '0.75rem',
+          }}
+        >
+          {databaseNavItems.map((item) => {
+            const Icon = item.icon
+            const active = isTabActive(item.href)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.45rem 0.85rem',
+                  fontSize: '0.8125rem',
+                  fontWeight: active ? 600 : 500,
+                  color: active ? '#ffffff' : 'var(--color-fg-muted)',
+                  backgroundColor: active ? 'var(--color-canvas-subtle)' : 'transparent',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                  border: active ? '1px solid var(--color-border-default)' : '1px solid transparent',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <Icon size={15} color={active ? 'var(--color-success-fg)' : 'currentColor'} />
+                <span>{item.label}</span>
+              </Link>
+            )
+          })}
         </div>
 
         {/* Workspace Tab Content */}
@@ -130,3 +201,4 @@ export default function ProjectDatabaseLayout({ children }: { children: React.Re
     </DatabaseContext.Provider>
   )
 }
+
