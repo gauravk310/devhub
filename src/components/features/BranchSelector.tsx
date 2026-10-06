@@ -8,11 +8,12 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 interface Props {
   codebaseName: string
   repoFullName: string
+  projectId?: string
   value: string | null
   onChange: (branch: string | null) => void
 }
 
-export default function BranchSelector({ codebaseName, repoFullName, value, onChange }: Props) {
+export default function BranchSelector({ codebaseName, repoFullName, projectId, value, onChange }: Props) {
   const [branches, setBranches] = useState<GitHubBranch[]>([])
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
@@ -23,12 +24,15 @@ export default function BranchSelector({ codebaseName, repoFullName, value, onCh
     const [owner, repo] = repoFullName.split('/')
     if (!owner || !repo) return
     setLoading(true)
-    fetch(`/api/github/repos/${owner}/${repo}/branches`)
+    const url = projectId
+      ? `/api/github/repos/${owner}/${repo}/branches?projectId=${encodeURIComponent(projectId)}`
+      : `/api/github/repos/${owner}/${repo}/branches`
+    fetch(url)
       .then((r) => r.json())
       .then((j) => setBranches(j.data ?? []))
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [repoFullName])
+  }, [repoFullName, projectId])
 
   // Handle click outside to close dropdown
   useEffect(() => {

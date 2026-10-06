@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth'
 import dbConnect from '@/lib/mongodb'
-import User from '@/models/User'
+import { getValidGitHubToken } from '@/lib/github-token'
 import { Octokit } from '@octokit/rest'
 
 // Parser to extract branch names from Git merge messages
@@ -73,14 +73,26 @@ export async function GET(req: Request) {
     return Response.json({ error: 'Missing or invalid parameters' }, { status: 400 })
   }
 
+  const projectId = searchParams.get('projectId')
+
   await dbConnect()
-  const dbUser = await User.findById(session.user.id).select('githubAccessToken')
-  if (!dbUser?.githubAccessToken) {
-    return Response.json({ error: 'No GitHub account linked' }, { status: 403 })
+  const [owner, repo] = repoFullName.split('/')
+
+  const token = await getValidGitHubToken({
+    userId: session.user.id,
+    owner,
+    repo,
+    projectId,
+  })
+
+  if (!token) {
+    return Response.json(
+      { error: 'No GitHub account linked with access to this repository' },
+      { status: 403 }
+    )
   }
 
-  const [owner, repo] = repoFullName.split('/')
-  const octokit = new Octokit({ auth: dbUser.githubAccessToken })
+  const octokit = new Octokit({ auth: token })
 
   try {
     if (sourceType === 'PR') {

@@ -66,6 +66,7 @@ export async function getRepoBranches(
     }
   } catch (error) {
     console.error('Error fetching branches:', error)
+    throw error
   }
 
   return branches

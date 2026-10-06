@@ -99,6 +99,7 @@ export default function CreateFeatureModal({ isOpen, onClose, onCreated, project
                 key={cb._id.toString()}
                 codebaseName={cb.name}
                 repoFullName={cb.repoFullName}
+                projectId={projectId}
                 value={branches[cb._id.toString()] ?? null}
                 onChange={(v) => setBranches((b) => ({ ...b, [cb._id.toString()]: v }))}
               />

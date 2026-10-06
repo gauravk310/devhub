@@ -154,7 +154,7 @@ export default function DeploymentHistoryPage({ params }: { params: Promise<{ pr
       const qaBranchName = qaBranchObj?.branchName || ''
 
       try {
-        let url = `/api/github/merges?repo=${encodeURIComponent(repoFullName)}&page=${currentPage}&per_page=25`
+        let url = `/api/github/merges?repo=${encodeURIComponent(repoFullName)}&projectId=${encodeURIComponent(projectId)}&page=${currentPage}&per_page=25`
 
         if (qaBranchName) {
           url += `&qaBranch=${encodeURIComponent(qaBranchName)}`
@@ -246,7 +246,7 @@ export default function DeploymentHistoryPage({ params }: { params: Promise<{ pr
 
       try {
         const repoParam = encodeURIComponent(selectedCodebase.repoFullName)
-        let url = `/api/github/merges/commits?repo=${repoParam}&source_type=${item.sourceType}`
+        let url = `/api/github/merges/commits?repo=${repoParam}&projectId=${encodeURIComponent(projectId)}&source_type=${item.sourceType}`
         if (item.sourceType === 'PR') {
           url += `&pull_number=${item.number}`
         } else {

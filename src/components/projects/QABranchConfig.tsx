@@ -7,9 +7,10 @@ interface Props {
   codebases: ICodebase[]
   qaBranches: Record<string, string> // codebaseId -> branchName
   onChange: (codebaseId: string, branch: string) => void
+  projectId?: string
 }
 
-export default function QABranchConfig({ codebases, qaBranches, onChange }: Props) {
+export default function QABranchConfig({ codebases, qaBranches, onChange, projectId }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
       {codebases.map((cb) => {
@@ -19,6 +20,7 @@ export default function QABranchConfig({ codebases, qaBranches, onChange }: Prop
             key={id}
             codebaseName={cb.name}
             repoFullName={cb.repoFullName}
+            projectId={projectId}
             value={qaBranches[id] || null}
             onChange={(branch) => onChange(id, branch ?? '')}
           />
