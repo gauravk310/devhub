@@ -45,19 +45,30 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (!isValidObjectId(projectId)) return Response.json({ error: 'Invalid ID' }, { status: 400 })
 
   await dbConnect()
-  const { error, status } = await assertMember(projectId, session.user.id)
-  if (error) return Response.json({ error }, { status })
+  const { error, status, project } = await assertMember(projectId, session.user.id)
+  if (error || !project) return Response.json({ error: error || 'Project not found' }, { status })
 
   const body = await req.json()
-  const { name, description, codebaseBranches, dbChange, envChange, note, type, deploymentDate } = body
+  const { name, description, codebaseBranches, dbChange, envChange, note, type, authorId: reqAuthorId, deploymentDate } = body
 
   if (!name?.trim()) return Response.json({ error: 'Feature name is required' }, { status: 400 })
+
+  let authorId = session.user.id
+  if (reqAuthorId && isValidObjectId(reqAuthorId)) {
+    const isAuthorMember = project.members?.some(
+      (m: { toString(): string } | { _id?: { toString(): string } }) =>
+        (typeof m === 'object' && '_id' in m && m._id ? m._id.toString() : m.toString()) === reqAuthorId
+    )
+    if (isAuthorMember) {
+      authorId = reqAuthorId
+    }
+  }
 
   const feature = await Feature.create({
     projectId,
     name: name.trim(),
     description: description?.trim() ?? '',
-    authorId: session.user.id,
+    authorId,
     codebaseBranches: codebaseBranches ?? [],
     dbChange: dbChange?.trim() ?? '',
     envChange: envChange?.trim() ?? '',

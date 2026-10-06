@@ -59,6 +59,7 @@ export default function FeatureDetailPage({ params }: { params: Promise<{ projec
   const [deploymentDate, setDeploymentDate] = useState('')
   const [branches, setBranches] = useState<Record<string, string | null>>({})
   const [selectedCollabs, setSelectedCollabs] = useState<string[]>([])
+  const [authorId, setAuthorId] = useState<string>('')
 
   // Form saving state
   const [saving, setSaving] = useState(false)
@@ -107,6 +108,7 @@ export default function FeatureDetailPage({ params }: { params: Promise<{ projec
         })
         setBranches(branchMap)
         setSelectedCollabs(f.collaborators ? f.collaborators.map((c) => c._id.toString()) : [])
+        setAuthorId(f.authorId?._id?.toString() ?? '')
       }
     } catch (err) {
       setError((err as Error).message)
@@ -136,6 +138,7 @@ export default function FeatureDetailPage({ params }: { params: Promise<{ projec
     })
     setBranches(branchMap)
     setSelectedCollabs(feature.collaborators ? feature.collaborators.map((c) => c._id.toString()) : [])
+    setAuthorId(feature.authorId?._id?.toString() ?? '')
     setToast(null)
     setIsEditMode(false)
   }
@@ -167,10 +170,11 @@ export default function FeatureDetailPage({ params }: { params: Promise<{ projec
           description,
           type,
           status,
+          authorId: authorId || undefined,
           dbChange,
           envChange,
           note,
-          collaborators: selectedCollabs,
+          collaborators: selectedCollabs.filter((id) => id !== authorId),
           codebaseBranches,
           deploymentDate: deploymentDate || null,
         }),
@@ -308,7 +312,7 @@ export default function FeatureDetailPage({ params }: { params: Promise<{ projec
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
               {/* Type */}
               <div>
                 <label className="gh-label">Feature Type</label>
@@ -322,6 +326,29 @@ export default function FeatureDetailPage({ params }: { params: Promise<{ projec
                   <option value="UPDATE">Update</option>
                   <option value="DISCARD">Discard</option>
                   <option value="OTHER">Other</option>
+                </select>
+              </div>
+
+              {/* Author */}
+              <div>
+                <label className="gh-label">Author</label>
+                <select
+                  className="gh-select"
+                  value={authorId}
+                  onChange={(e) => {
+                    const newAuthorId = e.target.value
+                    setAuthorId(newAuthorId)
+                    setSelectedCollabs((prev) => prev.filter((id) => id !== newAuthorId))
+                  }}
+                >
+                  {project?.members.map((m) => {
+                    const isYou = m._id.toString() === session?.user?.id
+                    return (
+                      <option key={m._id.toString()} value={m._id.toString()}>
+                        {m.name || m.email || 'Member'} {isYou ? '(You)' : ''}
+                      </option>
+                    )
+                  })}
                 </select>
               </div>
 
@@ -364,7 +391,7 @@ export default function FeatureDetailPage({ params }: { params: Promise<{ projec
                 overflowY: 'auto'
               }}>
                 {project?.members
-                  .filter((m) => m._id.toString() !== feature.authorId?._id?.toString())
+                  .filter((m) => m._id.toString() !== authorId)
                   .map((m) => {
                     const isSelected = selectedCollabs.includes(m._id.toString())
                     return (
@@ -408,7 +435,7 @@ export default function FeatureDetailPage({ params }: { params: Promise<{ projec
                     )
                   })
                 }
-                {project?.members.filter((m) => m._id.toString() !== feature.authorId?._id?.toString()).length === 0 && (
+                {project?.members.filter((m) => m._id.toString() !== authorId).length === 0 && (
                   <span style={{ fontSize: '0.8125rem', color: 'var(--color-fg-subtle)', fontStyle: 'italic' }}>
                     No other team members available.
                   </span>

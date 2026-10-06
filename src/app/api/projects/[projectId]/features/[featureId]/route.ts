@@ -55,10 +55,20 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (!feature) return Response.json({ error: 'Feature not found' }, { status: 404 })
 
   const body = await req.json()
-  const { name, description, codebaseBranches, dbChange, envChange, note, collaborators, status, deploymentDate } = body
+  const { name, description, codebaseBranches, dbChange, envChange, note, collaborators, status, type, authorId, deploymentDate } = body
 
   if (name !== undefined) feature.name = name.trim()
   if (description !== undefined) feature.description = description.trim()
+  if (type !== undefined) feature.type = type
+  if (authorId !== undefined && isValidObjectId(authorId)) {
+    const isAuthorMember = project.members?.some(
+      (m: { toString(): string } | { _id?: { toString(): string } }) =>
+        (typeof m === 'object' && '_id' in m && m._id ? m._id.toString() : m.toString()) === authorId
+    )
+    if (isAuthorMember) {
+      feature.authorId = authorId
+    }
+  }
   if (codebaseBranches !== undefined) feature.codebaseBranches = codebaseBranches
   if (dbChange !== undefined) feature.dbChange = dbChange.trim()
   if (envChange !== undefined) feature.envChange = envChange.trim()

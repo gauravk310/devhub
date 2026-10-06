@@ -72,6 +72,7 @@ export default function FeaturesPage({ params }: { params: Promise<{ projectId: 
         onCreated={load}
         projectId={projectId}
         codebases={project?.codebases ?? []}
+        members={project?.members ?? []}
       />
     </div>
   )

@@ -6,6 +6,7 @@ import Badge from '@/components/ui/Badge'
 import { ChevronDown } from 'lucide-react'
 import SwalConfirm from '@/components/ui/SwalConfirm'
 import Modal from '@/components/ui/Modal'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 const ALL_STATUSES: FeatureStatus[] = ['PENDING', 'READY', 'TESTING', 'DEPLOYED', 'DISCARD']
 
@@ -55,7 +56,15 @@ export default function FeatureStatusBadge({ status, featureId, projectId, onUpd
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-      if (res.ok) onUpdated(featureId, pendingStatus, payload.deploymentDate)
+      if (res.ok) {
+        onUpdated(featureId, pendingStatus, payload.deploymentDate)
+      } else {
+        const j = await res.json()
+        alert(j.error || 'Failed to update status')
+      }
+    } catch (err) {
+      console.error('Failed to update status:', err)
+      alert((err as Error).message || 'Failed to update status')
     } finally {
       setLoading(false)
       setPendingStatus(null)
@@ -65,18 +74,31 @@ export default function FeatureStatusBadge({ status, featureId, projectId, onUpd
   if (readonly) return <Badge status={status} />
 
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-flex' }}>
+    <div ref={ref} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         disabled={loading}
         style={{
-          display: 'flex', alignItems: 'center', gap: '0.25rem',
-          background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.35rem',
+          background: 'transparent',
+          border: 'none',
+          cursor: loading ? 'wait' : 'pointer',
+          padding: '2px 4px',
+          borderRadius: '6px',
+          opacity: loading ? 0.75 : 1,
+          transition: 'all 0.15s ease',
         }}
+        title={loading ? 'Updating status…' : 'Change status'}
       >
         <Badge status={status} />
-        <ChevronDown size={12} color="var(--color-fg-subtle)" />
+        {loading ? (
+          <LoadingSpinner size={12} color="var(--color-accent-fg)" />
+        ) : (
+          <ChevronDown size={12} color="var(--color-fg-subtle)" />
+        )}
       </button>
 
       {open && (
@@ -117,8 +139,9 @@ export default function FeatureStatusBadge({ status, featureId, projectId, onUpd
 
       <SwalConfirm
         isOpen={pendingStatus !== null && pendingStatus !== 'DEPLOYED'}
-        onClose={() => setPendingStatus(null)}
+        onClose={() => { if (!loading) setPendingStatus(null) }}
         onConfirm={handleConfirmChange}
+        loading={loading}
         title="Change Feature Status?"
         message={`Are you sure you want to change the status of this feature from ${status} to ${pendingStatus || ''}?`}
         confirmText="Change Status"
@@ -127,7 +150,7 @@ export default function FeatureStatusBadge({ status, featureId, projectId, onUpd
 
       <Modal
         isOpen={pendingStatus === 'DEPLOYED'}
-        onClose={() => setPendingStatus(null)}
+        onClose={() => { if (!loading) setPendingStatus(null) }}
         title="Set Deployment Date"
         maxWidth="400px"
       >
@@ -141,6 +164,7 @@ export default function FeatureStatusBadge({ status, featureId, projectId, onUpd
               className="gh-input"
               value={deployDate}
               onChange={(e) => setDeployDate(e.target.value)}
+              disabled={loading}
               required
             />
             {!deployDate && (
@@ -154,7 +178,7 @@ export default function FeatureStatusBadge({ status, featureId, projectId, onUpd
             <button
               type="button"
               className="gh-btn-secondary"
-              onClick={() => setPendingStatus(null)}
+              onClick={() => { if (!loading) setPendingStatus(null) }}
               disabled={loading}
             >
               Cancel
@@ -164,8 +188,16 @@ export default function FeatureStatusBadge({ status, featureId, projectId, onUpd
               className="gh-btn-primary"
               onClick={handleConfirmChange}
               disabled={loading || !deployDate}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
             >
-              {loading ? 'Updating...' : 'Confirm'}
+              {loading ? (
+                <>
+                  <LoadingSpinner size={14} color="#ffffff" />
+                  <span>Updating…</span>
+                </>
+              ) : (
+                'Confirm'
+              )}
             </button>
           </div>
         </div>
